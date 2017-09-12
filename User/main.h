@@ -2,9 +2,6 @@
 
 //#define SWIO_DEBUG
 
-#define BEEP_TIME 100
-//#define ACTIVE_BEEP 1
-
 //ALL_Status
 #define initialWAITOK -1
 #define initialTCP -2
@@ -37,9 +34,7 @@ void USART2_Config(void);
 void RCC_Configuration(void);
 void NVIC_Configuration(void);
 void GPIO_Configuration(void);
-void TIM1_Int_Init(void);
 void TIM3_Int_Init(u16 arr,u16 psc);
-void beep_on(unsigned int time);
 
 //通过状态机的方式控制整个代码流程
 void restart_MCU(void);

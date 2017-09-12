@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,DEBUG_ENABLE_SEMIHOST</Define>
               <Undefine></Undefine>
-              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH</IncludePath>
+              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -517,6 +517,11 @@
               <FileName>stmflash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\User\STMFLASH\stmflash.c</FilePath>
+            </File>
+            <File>
+              <FileName>buzzer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\buzzer\buzzer.c</FilePath>
             </File>
           </Files>
         </Group>
