@@ -522,6 +522,8 @@ void closeTCP(void)
 
 int sim800C_send(const uint8_t *buffer, uint32_t len)
 {
+	sprintf(DBG_BUF, "---------- sim800C_send len = %d ----------", len);
+	DBG(DBG_BUF);
   return sATCIPSENDSingle(buffer, len);
 }
 
@@ -538,6 +540,11 @@ int sim800C_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
     if (Fifo_canPush(&recv_fifo3)) Fifo_Push(&recv_fifo3, *buffer);
     buffer++;
   }
+	if(len != 0)
+	{
+		sprintf(DBG_BUF, "########## sim800C_recv len = %d ##########", len);
+		DBG(DBG_BUF);
+	}
   return len;
 }
 

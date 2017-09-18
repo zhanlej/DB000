@@ -25,13 +25,14 @@ extern char mqtt_mode[2];
 extern volatile unsigned char fan_level;
 extern char payload[MQTT_SEND_SIZE];
 
-u16 CSQ[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u16 C1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u16 C2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u16 AQI1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u16 AQI2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u16 AQI[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-u8 L[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int CSQ[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int HCHO[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int C1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int C2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int AQI1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int AQI2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int AQI[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+int L[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 //¶ÏÍø²âÊÔ¼ÇÂ¼ÓÃ
 unsigned char gprs_connect_cnt = 0;
 unsigned char gprs_break_cnt = 0;
@@ -41,16 +42,16 @@ u32 break_time;
 
 void SendDataMode_group(cJSON *root)
 {
-  int i;
+//  int i;
   int trans_size;
   cJSON *aqi = NULL;
-  cJSON *j_csq = NULL;
-  cJSON *j_c1 = NULL;
-  cJSON *j_c2 = NULL;
-  cJSON *j_aqi1 = NULL;
-  cJSON *j_aqi2 = NULL;
-  cJSON *j_aqi = NULL;
-  cJSON *j_l = NULL;
+//  cJSON *j_csq = NULL;
+//  cJSON *j_c1 = NULL;
+//  cJSON *j_c2 = NULL;
+//  cJSON *j_aqi1 = NULL;
+//  cJSON *j_aqi2 = NULL;
+//  cJSON *j_aqi = NULL;
+//  cJSON *j_l = NULL;
 
   trans_size = current_interval / COUNT_INTERVAL;
 
@@ -58,23 +59,33 @@ void SendDataMode_group(cJSON *root)
 //		cJSON_AddItemToObject(root, "CSQ", cJSON_CreateIntArray((const int *)CSQ, trans_size));
   cJSON_AddStringToObject(aqi, "mode", (const char *)mqtt_mode);
 
-  cJSON_AddItemToObject(root, "CSQ", j_csq = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "C1", j_c1 = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "C2", j_c2 = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "AQI1", j_aqi1 = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "AQI2", j_aqi2 = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "AQI", j_aqi = cJSON_CreateArray());
-  cJSON_AddItemToObject(aqi, "L", j_l = cJSON_CreateArray());
-  for(i = 0; i < trans_size; i++)
-  {
-    cJSON_AddItemToArray(j_csq, cJSON_CreateNumber(CSQ[i]));
-    cJSON_AddItemToArray(j_c1, cJSON_CreateNumber(C1[i]));
-    cJSON_AddItemToArray(j_c2, cJSON_CreateNumber(C2[i]));
-    cJSON_AddItemToArray(j_aqi1, cJSON_CreateNumber(AQI1[i]));
-    cJSON_AddItemToArray(j_aqi2, cJSON_CreateNumber(AQI2[i]));
-    cJSON_AddItemToArray(j_aqi, cJSON_CreateNumber(AQI[i]));
-    cJSON_AddItemToArray(j_l, cJSON_CreateNumber(L[i]));
-  }
+//  cJSON_AddItemToObject(root, "CSQ", j_csq = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "C1", j_c1 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "C2", j_c2 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "AQI1", j_aqi1 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "AQI2", j_aqi2 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "AQI", j_aqi = cJSON_CreateArray());
+//  cJSON_AddItemToObject(aqi, "L", j_l = cJSON_CreateArray());
+//  for(i = 0; i < trans_size; i++)
+//  {
+//    cJSON_AddItemToArray(j_csq, cJSON_CreateNumber(CSQ[i]));
+//    cJSON_AddItemToArray(j_c1, cJSON_CreateNumber(C1[i]));
+//    cJSON_AddItemToArray(j_c2, cJSON_CreateNumber(C2[i]));
+//    cJSON_AddItemToArray(j_aqi1, cJSON_CreateNumber(AQI1[i]));
+//    cJSON_AddItemToArray(j_aqi2, cJSON_CreateNumber(AQI2[i]));
+//    cJSON_AddItemToArray(j_aqi, cJSON_CreateNumber(AQI[i]));
+//    cJSON_AddItemToArray(j_l, cJSON_CreateNumber(L[i]));
+//  }
+
+	cJSON_AddItemToObject(root, "CSQ", cJSON_CreateIntArray(CSQ, trans_size));
+	cJSON_AddItemToObject(aqi, "HCHO", cJSON_CreateIntArray(HCHO, trans_size));
+	cJSON_AddItemToObject(aqi, "C1", cJSON_CreateIntArray(C1, trans_size));
+	cJSON_AddItemToObject(aqi, "C2", cJSON_CreateIntArray(C2, trans_size));
+	cJSON_AddItemToObject(aqi, "AQI1", cJSON_CreateIntArray(AQI1, trans_size));
+	cJSON_AddItemToObject(aqi, "AQI2", cJSON_CreateIntArray(AQI2, trans_size));
+	cJSON_AddItemToObject(aqi, "AQI", cJSON_CreateIntArray(AQI, trans_size));
+	cJSON_AddItemToObject(aqi, "L", cJSON_CreateIntArray(L, trans_size));
+
 
 
   if(fan_level == 0) current_interval = CLOSE_INTERVAL;

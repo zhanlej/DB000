@@ -13,7 +13,7 @@
 #include "aqi.h"
 //add for gprs
 #include "uart1.h"
-#include "uart3.h"
+//#include "uart3.h"
 #include "interface.h"
 #include "serialportAPI.h"
 #include "sim800C.h"
@@ -30,12 +30,14 @@
 #include "WS2812BNOP.h"
 //add for 蜂鸣器
 #include "buzzer.h"
+//add for 甲醛传感器
+#include "DSHCHO.h"
 
 u16 U_ID[6];
 char USART2_RX_BUF[10];
 char power_state[4];
 char mqtt_mode[2] = {"0"}; //通过mqtt接收到的指令
-unsigned int tim3_cnt = 0;	//为了实现5分钟定时
+unsigned int tim3_cnt = 1;	//为了实现5分钟定时
 unsigned int current_interval = CLOSE_INTERVAL;
 volatile unsigned char fan_level = 0; //自动模式下的速度档位
 vu8 PM2_5_OK = 0;										//pm2.5传感器是否工作的标志
@@ -73,9 +75,11 @@ int main()
   GPIO_Configuration(); //io配置
 
 	RGB_Set(CUTDOWN, 4);	//关闭空气质量灯
-  USART2_Config();      //串口2配置
+
   UartBegin(115200, &USART1Conf, &U1_PutChar);				//串口1配置
-  USART3Conf(115200);		//串口3配置
+	USART2Conf(9600);      //串口2配置
+  USART3Conf(9600);		//串口3配置
+	//DSHCHO_Init(115200, &USART3Conf, &U3_PutChar);
   TIM2_Init();					//每1ms中断一次的定时器，用来记录时间
 #ifndef ACTIVE_BEEP
 	TIM1_Int_Init();			//打开定时器TIM1，产生无源蜂鸣器的PWM
@@ -91,14 +95,23 @@ int main()
 	DBG(DBG_BUF);
 	beep_on(BEEP_TIME);
 	
-	
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);
 	sprintf(DBG_BUF, "U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
 	DBG(DBG_BUF);
+	
+	//给甲醛传感器发送命令接收返回数据
+	Send_DSHCHO_Cmd();
+//	delay_ms(100);
+//	sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
+//	DBG(DBG_BUF);
+	
 //	while(1)
 //	{
 //		delay_ms(1000);
-//		beep_on(200);
+//		Send_DSHCHO_Cmd();
+//		delay_ms(100);
+//		sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
+//		DBG(DBG_BUF);
 //	}
 
   while(1)
@@ -245,12 +258,12 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  //浮空输入
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-//  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2; //USART2 TX
-//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;      //复用推挽输出
-//  GPIO_Init(GPIOA, &GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;     //A2
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2; //USART2 TX
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;      //复用推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;     //A2
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
+//  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;      //USART2 RX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;   //浮空输入
@@ -285,11 +298,11 @@ void NVIC_Configuration(void)  //中断优先级NVIC设置
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  //使能中断通道
   NVIC_Init(&NVIC_InitStructure);
 
-//	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//打开该中断
-//	NVIC_Init(&NVIC_InitStructure);
+	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//打开该中断
+	NVIC_Init(&NVIC_InitStructure);
 
   /* Enable the TIM2 gloabal Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
@@ -317,26 +330,6 @@ void NVIC_Configuration(void)  //中断优先级NVIC设置
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;								//使能外部中断通道
 	NVIC_Init(&NVIC_InitStructure); 
 #endif
-}
-
-void USART2_Config(void)
-{
-
-  USART_InitTypeDef USART_InitStructure;
-
-  RCC_APB2PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE); // 使能USART的时钟和GPIOA的时钟（同时）
-
-  //initial UART2
-  USART_InitStructure.USART_BaudRate = 9600;
-  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-  USART_InitStructure.USART_StopBits = USART_StopBits_1;
-  USART_InitStructure.USART_Parity = USART_Parity_No;
-  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;  //无硬件流
-  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-  USART_Init(USART2, &USART_InitStructure );
-  USART_ITConfig(USART2, USART_IT_RXNE, ENABLE); //串口接收中断使能
-  //USART_ITConfig(USART1, USART_IT_TXE, ENABLE);    //使能发送缓冲空中断
-  USART_Cmd(USART2, ENABLE);
 }
 
 void TIM3_Int_Init(u16 arr, u16 psc)
@@ -619,8 +612,15 @@ void Transmission_State()
 		internal_flag = 0;
 				
 		eATCSQ(&sim_csq);	//获取当前csq值		
-		if(send_flag == 1) CSQ[(current_interval / COUNT_INTERVAL) - 1] = sim_csq;	//因为tim3_cnt是在中断中计算的，当send_flag=1时tim3_cnt立即清零，因此只能用current_interval的值来定位最后一个数据的位置
-		else CSQ[(tim3_cnt / COUNT_INTERVAL) - 1] = sim_csq;
+		
+		if(send_flag == 1) //因为tim3_cnt是在中断中计算的，当send_flag=1时tim3_cnt立即清零，因此只能用current_interval的值来定位最后一个数据的位置
+		{
+			CSQ[(current_interval / COUNT_INTERVAL) - 1] = sim_csq;
+		}
+		else 
+		{
+			CSQ[(tim3_cnt / COUNT_INTERVAL) - 1] = sim_csq;
+		}
 	}
 	
   if(send_flag == 1)
@@ -708,11 +708,17 @@ void TIM3_IRQHandler(void)   //TIM3中断
 		{
 			auto_flag = 1;
 		}
+		
+		if((tim3_cnt+1) % COUNT_INTERVAL == 0)	//要提前1S发送甲醛传感器的命令
+		{
+			Send_DSHCHO_Cmd(); //给甲醛传感器发送命令
+		}
 
     if(tim3_cnt % COUNT_INTERVAL == 0)
     {
 			internal_flag = 1;	//还有个CSQ的数据不在中断中进行处理，因为只有当连上网络才能获取CSQ值，并且获取CSQ的函数里有延迟尽量不要在中断中执行
 			
+			HCHO[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_HCHO;
 			C1[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_PM2_5;
 			C2[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_PM10;
 			AQI1[(tim3_cnt / COUNT_INTERVAL) - 1] = AQI_2_5;
@@ -742,6 +748,9 @@ void SendJson(u8 mode)
 	payloadlen = strlen(payload);
 	len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
 	sim800C_send(mqtt_buf, len);
+	
+	sprintf(DBG_BUF, "mode = %d, SendJson len = %d", mode, len);
+	DBG(DBG_BUF);
 }
 
 int SendPingPack(int times)
@@ -777,7 +786,6 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 	int rtc_count;
 	int timeout_count;
   cJSON *mqtt_recv_root = NULL;
-	cJSON *http_root = NULL;
 	cJSON *RTC_obj = NULL;
 	cJSON *timeout_obj = NULL;
 	char * out;
@@ -831,9 +839,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 
     //处理power指令，收到power on开启自动模式，收到power off关闭风机，收到其他信息也关闭风机
     if(cJSON_GetObjectItem(mqtt_recv_root, "power") != NULL)
-    {
-			http_root = cJSON_Parse(http_buf);	//只有在接收到power指令的时候才会返回基站信息
-			
+    {			
       power_tmp = cJSON_GetObjectItem(mqtt_recv_root, "power")->valuestring;
       strcpy(power_state, power_tmp);
       sprintf(DBG_BUF, "recive power is %s, power_state is %s", power_tmp, power_state);
@@ -911,9 +917,6 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 			SendJson(GPRS_RECORD_MODE);
 		}
 		
-		if(http_root != NULL)	cJSON_AddItemReferenceToObject(mqtt_recv_root, "geo", http_root);
-		else DBG("http_root == NULL!");
-		
 		//将收到的JSON数劲添加基站定位的数据然后立即返回，类似回应消息
 		out = cJSON_Print(mqtt_recv_root);			
 		strcpy(return_data, out);
@@ -932,7 +935,6 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 	}
 
   //必须释放json的空间，否则会溢出
-	cJSON_Delete(http_root);
   cJSON_Delete(mqtt_recv_root);
 }
 

@@ -33,6 +33,7 @@
 #include "aqi.h"
 #include "key.h"
 #include "rtc.h"
+#include "DSHCHO.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -202,6 +203,26 @@ void USART1_IRQHandler(void)
     /* Read one byte from the receive data register */
     rec_data = USART_ReceiveData(USART1);
     SerialInt(rec_data);
+  }
+}
+
+/**
+  * @brief  This function handles USART3 global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void USART3_IRQHandler(void)
+{
+	static int i = 0;
+  unsigned char rec_data;
+  if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
+  {
+    USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+    /* Read one byte from the receive data register */
+    rec_data = USART_ReceiveData(USART3);
+//		DSHCHO_RX_BUF[i] = rec_data;
+//		i++;
+    Recive_HCHO(rec_data);
   }
 }
 

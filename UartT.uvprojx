@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,DEBUG_ENABLE_SEMIHOST</Define>
               <Undefine></Undefine>
-              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer</IncludePath>
+              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer;.\User\DSHCHO</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -523,6 +523,11 @@
               <FileType>1</FileType>
               <FilePath>.\User\buzzer\buzzer.c</FilePath>
             </File>
+            <File>
+              <FileName>DSHCHO.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\DSHCHO\DSHCHO.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -617,11 +622,6 @@
               <FileName>stringAPIext.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\GSM\stringAPIext.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart3.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\GSM\uart3.c</FilePath>
             </File>
             <File>
               <FileName>sim800C.c</FileName>
