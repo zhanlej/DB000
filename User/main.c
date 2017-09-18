@@ -52,7 +52,7 @@ volatile int AQI_Max = 47;								//MAX(AQI_2_5,AQI_10)
 short All_State = initialWAITOK;
 char http_buf[512];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
-char deviceID[20] = "200033";
+char deviceID[20] = "200034";
 MQTTString topicString = MQTTString_initializer;
 unsigned char mqtt_buf[MQTT_SEND_SIZE];   
 int mqtt_buflen = sizeof(mqtt_buf); 

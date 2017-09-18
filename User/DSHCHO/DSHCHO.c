@@ -2,22 +2,22 @@
 #include "uart1.h"
 #include "stdio.h"
 
-float Conce_HCHO = 0.001;				//¼×È©Å¨¶È
+int Conce_HCHO = 0;				//¼×È©Å¨¶È
 char DSHCHO_RX_BUF[10];
 u16 check_short;
 int data_equivalent;
 u8 state;
 u8 DSHCHO_RX_STA;
 
-static void (*DSHCHO_UartInit)(unsigned int);
-static void (*DSHCHO_UartSend)(unsigned char);
+//static void (*DSHCHO_UartInit)(unsigned int);
+//static void (*DSHCHO_UartSend)(unsigned char);
 
-void DSHCHO_Init(unsigned int bps,void (*uart_init)(unsigned int),void (*uart_send)(unsigned char))
-{
-	DSHCHO_UartInit = uart_init;
-	DSHCHO_UartSend = uart_send;
-	DSHCHO_UartInit(bps);
-}
+//void DSHCHO_Init(unsigned int bps,void (*uart_init)(unsigned int),void (*uart_send)(unsigned char))
+//{
+//	DSHCHO_UartInit = uart_init;
+//	DSHCHO_UartSend = uart_send;
+//	DSHCHO_UartInit(bps);
+//}
 
 
 void Recive_HCHO(u8 Res)
@@ -69,7 +69,7 @@ void Recive_HCHO(u8 Res)
 			}
 			//Conce_HCHO = (float)((DSHCHO_RX_BUF[6]<<8)+DSHCHO_RX_BUF[7])/data_equivalent;
 			Conce_HCHO = (DSHCHO_RX_BUF[6]<<8)+DSHCHO_RX_BUF[7];
-			sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
+			sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %d", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
 			//DBG(DBG_BUF);
 			state = RECV_WAIT;
 		}

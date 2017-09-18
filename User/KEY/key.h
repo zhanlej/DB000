@@ -6,7 +6,7 @@
 #define BUTTON_FILTER_TIME         5
 #define BUTTON_LONG_TIME         200                /* 持续2秒，认为长按事件 */
 #define KEY0 GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_4)
-#define PRESS_SIZE 25
+#define PRESS_SIZE 20
 
 /*
         每个按键对应1个全局的结构体变量。
@@ -56,9 +56,10 @@ extern unsigned char wait_send_press;
 extern int press_len;
 extern char press_buf[PRESS_SIZE][2];
 extern u32 press_time_log[PRESS_SIZE];
-extern u16 press_C1[PRESS_SIZE];
-extern u16 press_C2[PRESS_SIZE];
-extern u16 press_AQI[PRESS_SIZE];
+extern u32 press_HCHO[PRESS_SIZE];
+extern u32 press_C1[PRESS_SIZE];
+extern u32 press_C2[PRESS_SIZE];
+extern u32 press_AQI[PRESS_SIZE];
 
 void Panakey_Init(void);
 void Pannelkey_Polling(void);
