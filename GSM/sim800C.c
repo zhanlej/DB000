@@ -35,6 +35,7 @@ int sATIPR(unsigned int baudrate);
 int eAT(void);
 int qATCPIN(char *CODE);
 int eATCSQ(uint8_t *csq);
+int eATCSQ_TRANS(uint8_t *csq);
 int qATCREG0(uint8_t *n, uint8_t *stat);
 int qATCGATT(uint8_t *attach);
 int sATCIPMODE(uint8_t mode);
@@ -75,6 +76,9 @@ int qATSSLSETCERT(char * read_buf);
 int sATSSLSETCERT(char * file_name, char * pass_word);
 int qATCIPSSL(u8 *n);
 int sATCIPSSL(u8 n);
+/******  透传模式切换到命令行模式  ******/
+int eEXIT_TRANS(void);
+int eATO(void);
 
 int eATCWSTARTSMART(uint8_t type, char *link_msg);
 int eATCWSTOPSMART(void);
@@ -784,6 +788,16 @@ int eATCSQ(uint8_t *csq)
   return 0;
 }
 
+int eATCSQ_TRANS(uint8_t *csq)
+{
+	if(!eEXIT_TRANS()) return 0;
+	DBG("eEXIT_TRANS is OK!");
+	if(!eATCSQ(csq)) return 0;
+	if(!eATO()) return 0;
+	DBG("eATO is OK!");
+	return 1;
+}
+
 int qATCREG0(uint8_t *n, uint8_t *stat)
 {
 
@@ -1274,6 +1288,22 @@ int sATCIPSSL(u8 n)
 	return recvFind("\r\nOK", TIME_OUT);
 }
 /******  SSL设置  ******/
+
+/******  透传模式切换到命令行模式  ******/
+int eEXIT_TRANS(void)
+{
+	rx_empty();
+	SerialPrint("+++", STRING_TYPE);
+	return recvFind("OK\r\n", 1000);
+}
+
+int eATO(void)
+{
+	rx_empty();
+	SerialPrintln("ATO", STRING_TYPE);
+	return recvFind("CONNECT\r\n", TIME_OUT);
+}
+/******  透传模式切换到命令行模式  ******/
 
 /*******************************************************************************
 * 函 数 名 ：eATCWSTARTSMART

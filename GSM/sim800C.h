@@ -69,5 +69,6 @@ int mqtt_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 void rx_empty(void);
 
 int eATCSQ(uint8_t *csq);	//为了上传csq数据给服务器
+int eATCSQ_TRANS(uint8_t *csq);	//在透传模式下为了上传csq数据给服务器
 
 #endif
