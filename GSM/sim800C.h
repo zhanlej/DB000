@@ -12,6 +12,7 @@ extern volatile unsigned long sys_tick;
 extern uint8_t sim_csq;	//为了上传csq数据给服务器
 
 //for gprs
+#define TRANS_MODE 1
 //#define SSL_MODE 1
 #define HOST_NAME   "47.92.81.9"
 #ifdef SSL_MODE
@@ -64,6 +65,7 @@ int createTCP(const char *addr, uint32_t port);
 void closeTCP(void);
 int sim800C_send(const uint8_t *buffer, uint32_t len);
 int sim800C_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
+int mqtt_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 void rx_empty(void);
 
 int eATCSQ(uint8_t *csq);	//为了上传csq数据给服务器

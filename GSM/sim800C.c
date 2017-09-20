@@ -18,7 +18,7 @@
 volatile unsigned long sys_tick = 0;
 
 char data_rec[RECV_BUF_SIZE];
-uint8_t sim_csq;
+uint8_t sim_csq = 0;
 char sim_ip[15];
 char sim_imei[16];
 unsigned int sim_loc;
@@ -162,7 +162,6 @@ int GSMInit(const char *addr, uint32_t port, char *http_data)
 	if(!ConectTest())	return 0;
 	if(!CheckState()) return 0;
 	//if(!FSInit()) return 0;
-	if(!TCPInit(addr, port)) return 0;
 	if(!LSB_API_data()) return 0;
 	if(!HttpInit(http_data)) return 0;
 	if(first_flag)
@@ -171,6 +170,9 @@ int GSMInit(const char *addr, uint32_t port, char *http_data)
 		if(!SimNTP_get()) return 0;
 		first_flag = 0;
 	}
+	
+	if(!TCPInit(addr, port)) return 0;
+	ClearRxBuf(); //清除串口中所有缓存的数据
 	return 1;
 }
 
@@ -232,6 +234,10 @@ int CheckState(void)
 	}
 	if(i >= 30) return 0;
 	DBG("CGATT = 1!");
+#ifdef TRANS_MODE
+	if(!sATCIPMODE(1)) return 0;
+	DBG("sATCIPMODE = 1 is OK!");
+#endif
 	if(!sATCSTT("CMNET")) return 0;
 	DBG("CSTT = CMNET is OK!");
 	if(!eATCIICR()) return 0;
@@ -321,8 +327,10 @@ int TCPInit(const char *addr, uint32_t port)
 	if(!createTCP(addr, port)) return 0;
 	sprintf(DBG_BUF, "create tcp ok! server_ip = %s, port = %d", addr, port);
 	DBG(DBG_BUF);
+#ifndef TRANS_MODE
 	if(!eATCIPSTATUS("CONNECT OK")) return 0;
 	DBG("STATUS: CONNECT OK!");
+#endif
 	
 	return 1;
 }
@@ -548,12 +556,41 @@ int sim800C_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
   return len;
 }
 
+//由于1S内可能接收不到返回数据因此在这里做了循环，封装sim800C_recv()函数。
+int mqtt_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
+{
+	int i;
+	int len;
+	for(i = 0; i < 5; i++)
+	{
+		if((len = sim800C_recv(buffer, buffer_size, timeout)) != 0) break;
+	}
+	
+	return len;
+}
+
 /* +IPD,<id>,<len>:<data> */
 /* +IPD,<len>:<data> */
 
 uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
 {
-
+#ifdef TRANS_MODE
+	unsigned long start;
+	int ret = 0;
+	char a;
+	
+	start = millis();
+	while (millis() - start < timeout)
+  {
+		if(SerialAvailable() > 0)
+    {
+      a = SerialRead();
+      buffer[ret++] = a;
+    }
+	}
+	
+	return ret;
+#else
   char a;
   int32_t index_PIPDcomma = 0;
   int32_t index_colon = 0; /* : */
@@ -647,6 +684,7 @@ uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint
     }
   }
   return 0;
+#endif
 }
 
 void rx_empty(void)
@@ -1380,13 +1418,24 @@ int sATCIPSTARTSingle(const char *type, const char *addr, uint32_t port)
 //  {
 //    return 1;
 //  }
+#ifdef TRANS_MODE
+	if(recvFind("CONNECT", 10000)) return 1;
+#else
 	if(recvFind("CONNECT OK", 10000)) return 1;
+#endif
 	//if(recvFind("CONNECT", 10000)) return 1;
   return 0;
 }
 
 int sATCIPSENDSingle(const uint8_t *buffer, uint32_t len)
 {
+#ifdef TRANS_MODE
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		SerialWrite(buffer[i]);
+	}
+#else
   int i;
   int int_len = len;
   rx_empty();
@@ -1401,6 +1450,7 @@ int sATCIPSENDSingle(const uint8_t *buffer, uint32_t len)
     }
     return recvFind("SEND OK", 3000);//10000
   }
+#endif
   return 0;
 }
 

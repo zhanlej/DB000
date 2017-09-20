@@ -395,7 +395,7 @@ void Initial_MQTT()
   len = MQTTSerialize_connect(mqtt_buf, mqtt_buflen, &mqtt_data);  //这句话开始MQTT的连接，但是不直接和发送函数相连，而是存到一个buf里面，再从buf里面发送
   sim800C_send(mqtt_buf, len);
 
-  sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
+  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 	sprintf(DBG_BUF, "rc = %d", rc);
 	DBG(DBG_BUF);
@@ -439,7 +439,7 @@ void MQTT_Sub0Pub1()
   //所有这些都不是直接发送，而是通过先获取buffer，我们再手动发送出去
   sim800C_send(mqtt_buf, len);
 
-  sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
   if (rc == SUBACK)  /* wait for suback */ //会在这里阻塞？
   {
@@ -468,7 +468,7 @@ void MQTT_Sub0Pub1()
   }
 	
 	//接收retain数据：expiresAt和childLock
-	sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+	mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 	if (rc == PUBLISH)
   {
@@ -542,7 +542,7 @@ int Public_Open(int time)
     len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, dup, qos, retain, packedid, topicString, (unsigned char*)payload, payloadlen);
     sim800C_send(mqtt_buf, len);
 
-    sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+    mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
     rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
     sprintf(DBG_BUF, "PUBLIC OPEN rc = %d", rc);
     DBG(DBG_BUF);
@@ -611,7 +611,7 @@ void Transmission_State()
 	{
 		internal_flag = 0;
 				
-		eATCSQ(&sim_csq);	//获取当前csq值		
+		//eATCSQ(&sim_csq);	//获取当前csq值		
 		
 		if(send_flag == 1) //因为tim3_cnt是在中断中计算的，当send_flag=1时tim3_cnt立即清零，因此只能用current_interval的值来定位最后一个数据的位置
 		{
@@ -762,7 +762,7 @@ int SendPingPack(int times)
 		len = MQTTSerialize_pingreq(mqtt_buf, 100);
 		sim800C_send(mqtt_buf, len);
 
-		sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
+		mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
 		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
 		{

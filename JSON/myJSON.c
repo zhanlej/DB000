@@ -176,7 +176,7 @@ void PressMode_group(cJSON *root)
 
 void GprsRecordMode_group(cJSON *root)
 {
-  eATCSQ(&sim_csq);	//获取当前csq值
+  //eATCSQ(&sim_csq);	//获取当前csq值
   cJSON_AddNumberToObject(root, "CSQ", sim_csq);
   cJSON_AddNumberToObject(root, "current_date", UNIXtime2date(RTC_GetCounter()));
   cJSON_AddNumberToObject(root, "current_time", RTC_GetCounter());
