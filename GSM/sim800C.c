@@ -79,6 +79,9 @@ int sATCIPSSL(u8 n);
 /******  透传模式切换到命令行模式  ******/
 int eEXIT_TRANS(void);
 int eATO(void);
+/******  拨号  ******/
+int sATD(int number);
+int sATS0(int number);
 
 int eATCWSTARTSMART(uint8_t type, char *link_msg);
 int eATCWSTOPSMART(void);
@@ -153,6 +156,7 @@ int GSMInit(const char *addr, uint32_t port, char *http_data)
 {	
 	static u8 first_flag = 1;
 	
+	VBAT = 0;
 	//open the GSM
 	delay(1000);
 	//GPIO_SetBits(GPIOB, GPIO_Pin_0);
@@ -238,6 +242,16 @@ int CheckState(void)
 	}
 	if(i >= 30) return 0;
 	DBG("CGATT = 1!");
+	
+#ifdef RF_TEST
+	delay(5000);
+//	if(!sATD(112)) return 0;
+//	DBG("sATD(112) is OK");
+	if(!sATS0(1)) return 0;
+	DBG("sATS0(1) is OK!");
+	while(1);
+#endif
+	
 #ifdef TRANS_MODE
 	if(!sATCIPMODE(1)) return 0;
 	DBG("sATCIPMODE = 1 is OK!");
@@ -1304,6 +1318,27 @@ int eATO(void)
 	return recvFind("CONNECT\r\n", TIME_OUT);
 }
 /******  透传模式切换到命令行模式  ******/
+
+/******  拨号  ******/
+int sATD(int number)
+{
+	char buf[SEND_BUF_SIZE];
+	rx_empty();
+	sprintf(buf, "ATD%d;", number);
+	SerialPrintln(buf, STRING_TYPE);
+	return recvFind("OK\r\n", 1000);
+}
+
+int sATS0(int number)
+{
+	char buf[SEND_BUF_SIZE];
+	rx_empty();
+	sprintf(buf, "ATS0=%d", number);
+	SerialPrintln(buf, STRING_TYPE);
+	return recvFind("OK\r\n", 1000);
+}
+/******  拨号  ******/
+	
 
 /*******************************************************************************
 * 函 数 名 ：eATCWSTARTSMART

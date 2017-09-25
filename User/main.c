@@ -248,7 +248,7 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;     //GPRS模块VBAT
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-  GPIO_ResetBits(GPIOA, GPIO_Pin_1); //PB1上电低电平
+  GPIO_SetBits(GPIOA, GPIO_Pin_1); //PA1上电低电平
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;   //USART1 TX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //复用推挽输出
@@ -293,13 +293,13 @@ void NVIC_Configuration(void)  //中断优先级NVIC设置
   NVIC_Init(&NVIC_InitStructure);
 
   NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;  //打开USART2中断通道
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //优先级
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //优先级
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;  //子优先级
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  //使能中断通道
   NVIC_Init(&NVIC_InitStructure);
 
 	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//打开该中断
 	NVIC_Init(&NVIC_InitStructure);

@@ -12,6 +12,7 @@ extern volatile unsigned long sys_tick;
 extern uint8_t sim_csq;	//为了上传csq数据给服务器
 
 //for gprs
+//#define RF_TEST 1
 #define TRANS_MODE 1
 //#define SSL_MODE 1
 #define HOST_NAME   "47.92.81.9"
