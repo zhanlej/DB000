@@ -34,6 +34,7 @@
 #include "key.h"
 #include "rtc.h"
 #include "DSHCHO.h"
+#include "PMS7003.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -203,6 +204,25 @@ void USART1_IRQHandler(void)
     /* Read one byte from the receive data register */
     rec_data = USART_ReceiveData(USART1);
     SerialInt(rec_data);
+  }
+}
+
+/**
+  * @brief  This function handles USART2 global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void USART2_IRQHandler(void)//串口2中断服务程序  PM2.5
+{
+  uint8_t Res;
+
+  static char start = 0;
+  static uint16_t USART2_RX_STA;
+
+  if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)//接收中断
+  {
+    Res = USART_ReceiveData(USART2);    //读取接收到的数据
+		Recive_PM(Res);
   }
 }
 

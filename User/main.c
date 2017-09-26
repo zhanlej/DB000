@@ -32,6 +32,8 @@
 #include "buzzer.h"
 //add for 甲醛传感器
 #include "DSHCHO.h"
+//add for PM2.5传感器
+#include "PMS7003.h"
 
 u16 U_ID[6];
 char USART2_RX_BUF[10];
@@ -40,13 +42,6 @@ char mqtt_mode[2] = {"0"}; //通过mqtt接收到的指令
 unsigned int tim3_cnt = 1;	//为了实现5分钟定时
 unsigned int current_interval = CLOSE_INTERVAL;
 volatile unsigned char fan_level = 0; //自动模式下的速度档位
-vu8 PM2_5_OK = 0;										//pm2.5传感器是否工作的标志
-volatile int Conce_PM2_5 = 45;       // PM2.5浓度
-volatile int Conce_PM10 = 55;        // PM10浓度
-volatile int Max_PM = 55;
-volatile int AQI_2_5 = 47;
-volatile int AQI_10 = 46;
-volatile int AQI_Max = 47;								//MAX(AQI_2_5,AQI_10)
 
 
 short All_State = initialWAITOK;
@@ -627,67 +622,6 @@ void Transmission_State()
   {
 		send_flag = 0;
 		SendJson(SENDDATA_MODE);
-  }
-}
-
-void USART2_IRQHandler(void)//串口2中断服务程序  PM2.5
-{
-  uint8_t Res;
-
-  static char start = 0;
-  static uint16_t USART2_RX_STA;
-
-  if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)//接收中断
-  {
-    Res = USART_ReceiveData(USART2);    //读取接收到的数据
-    if(Res == 0x42)             //如果接收的第一位数据是0X42
-    {
-      USART2_RX_STA = 0;    //让数组索引值从0开始
-      start = 1;              //变量用于确定第二位是否接收到了0X4D
-    }
-
-    if(start == 1)
-    {
-      switch (USART2_RX_STA)
-      {
-        case 1:
-          USART2_RX_BUF[0] = Res ;
-          break;      //接收0x4D
-        case 12:
-          USART2_RX_BUF[1] = Res ;
-          break;      //接收大气环境下PM2.5高8位
-        case 13:
-          USART2_RX_BUF[2] = Res ;
-          break;      //接收大气环境下PM2.5低8位
-        case 14:
-          USART2_RX_BUF[3] = Res ;
-          break;      //接收大气环境下PM10高8位
-        case 15:
-          USART2_RX_BUF[4] = Res ;
-          break;      //接收大气环境下PM10低8位
-        default:
-          break;
-      }
-      USART2_RX_STA++;
-
-      if(USART2_RX_STA > 15 && (0x4D == USART2_RX_BUF[0]))
-      {
-        start  = 0;
-
-        USART2_RX_STA = 0;              //对static类型赋初值
-
-        Conce_PM2_5 = (USART2_RX_BUF[1] << 8) + USART2_RX_BUF[2];
-        Conce_PM10  = (USART2_RX_BUF[3] << 8) + USART2_RX_BUF[4];
-        Max_PM = (Conce_PM2_5 > Conce_PM10) ? Conce_PM2_5 : Conce_PM10;
-				PM2_5_OK = 1;
-				AQI_Count(Conce_PM2_5, Conce_PM10, (int *)&AQI_2_5, (int *)&AQI_10, (int *)&AQI_Max);
-#ifdef DEBUG_PM
-        sprintf(DBG_BUF, "pm2.5=%d,pm10=%d\n", Conce_PM2_5, Conce_PM10);
-        DBG(DBG_BUF);
-#endif
-
-      }
-    }
   }
 }
 
