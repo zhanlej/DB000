@@ -6,13 +6,13 @@
 //#include "MyFifo.h"
 #include "stdio.h"
 #include "aqi.h"
-#include "DSHCHO.h"
+//#include "DSHCHO.h"
 
 unsigned char wait_send_press;
 int press_len;
 char press_buf[PRESS_SIZE][2];
 u32 press_time_log[PRESS_SIZE];
-u32 press_HCHO[PRESS_SIZE];
+//u32 press_HCHO[PRESS_SIZE];
 u32 press_C1[PRESS_SIZE];
 u32 press_C2[PRESS_SIZE];
 u32 press_AQI[PRESS_SIZE];
@@ -75,7 +75,7 @@ void SavePressLog(void)
 	else if(press_len >= PRESS_SIZE) press_len = PRESS_SIZE-1;	//当数组满的时候新的数据只替换末尾的一个数据
 	strcpy(press_buf[press_len], mqtt_mode);
 	press_time_log[press_len] = RTC_GetCounter();
-	press_HCHO[press_len] = Conce_HCHO;
+	//press_HCHO[press_len] = Conce_HCHO;
 	press_C1[press_len] = Conce_PM2_5;
 	press_C2[press_len] = Conce_PM10;			
 	press_AQI[press_len] = AQI_Max;			

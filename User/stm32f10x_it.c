@@ -33,7 +33,7 @@
 #include "aqi.h"
 #include "key.h"
 #include "rtc.h"
-#include "DSHCHO.h"
+//#include "DSHCHO.h"
 #include "PMS7003.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
@@ -216,8 +216,8 @@ void USART2_IRQHandler(void)//串口2中断服务程序  PM2.5
 {
   uint8_t Res;
 
-  static char start = 0;
-  static uint16_t USART2_RX_STA;
+//  static char start = 0;
+//  static uint16_t USART2_RX_STA;
 
   if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)//接收中断
   {
@@ -239,7 +239,7 @@ void USART3_IRQHandler(void)
     USART_ClearITPendingBit(USART3, USART_IT_RXNE);
     /* Read one byte from the receive data register */
     rec_data = USART_ReceiveData(USART3);
-    Recive_HCHO(rec_data);
+    //Recive_HCHO(rec_data);
   }
 }
 

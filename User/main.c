@@ -31,7 +31,7 @@
 //add for 蜂鸣器
 #include "buzzer.h"
 //add for 甲醛传感器
-#include "DSHCHO.h"
+//#include "DSHCHO.h"
 //add for PM2.5传感器
 #include "PMS7003.h"
 
@@ -95,7 +95,7 @@ int main()
 	DBG(DBG_BUF);
 	
 	//给甲醛传感器发送命令接收返回数据
-	Send_DSHCHO_Cmd();
+//	Send_DSHCHO_Cmd();
 //	delay_ms(100);
 //	sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
 //	DBG(DBG_BUF);
@@ -643,16 +643,16 @@ void TIM3_IRQHandler(void)   //TIM3中断
 			auto_flag = 1;
 		}
 		
-		if((tim3_cnt+1) % COUNT_INTERVAL == 0)	//要提前1S发送甲醛传感器的命令
-		{
-			Send_DSHCHO_Cmd(); //给甲醛传感器发送命令
-		}
+//		if((tim3_cnt+1) % COUNT_INTERVAL == 0)	//要提前1S发送甲醛传感器的命令
+//		{
+//			Send_DSHCHO_Cmd(); //给甲醛传感器发送命令
+//		}
 
     if(tim3_cnt % COUNT_INTERVAL == 0)
     {
 			internal_flag = 1;	//还有个CSQ的数据不在中断中进行处理，因为只有当连上网络才能获取CSQ值，并且获取CSQ的函数里有延迟尽量不要在中断中执行
 			
-			HCHO[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_HCHO;
+			//HCHO[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_HCHO;
 			C1[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_PM2_5;
 			C2[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_PM10;
 			AQI1[(tim3_cnt / COUNT_INTERVAL) - 1] = AQI_2_5;

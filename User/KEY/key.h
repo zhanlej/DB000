@@ -56,7 +56,7 @@ extern unsigned char wait_send_press;
 extern int press_len;
 extern char press_buf[PRESS_SIZE][2];
 extern u32 press_time_log[PRESS_SIZE];
-extern u32 press_HCHO[PRESS_SIZE];
+//extern u32 press_HCHO[PRESS_SIZE];
 extern u32 press_C1[PRESS_SIZE];
 extern u32 press_C2[PRESS_SIZE];
 extern u32 press_AQI[PRESS_SIZE];
