@@ -4,8 +4,8 @@
 #include "serialportAPI.h"
 
 static char _receive_buffer[_SS_MAX_RX_BUFF]; 
-static volatile unsigned char _receive_buffer_tail = 0;
-static volatile unsigned char _receive_buffer_head = 0;
+static volatile int _receive_buffer_tail = 0;
+static volatile int _receive_buffer_head = 0;
 unsigned char _buffer_overflow = 0;//溢出标志位
 
 static void (*UartInit)(unsigned int);
