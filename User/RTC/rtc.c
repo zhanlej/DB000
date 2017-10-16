@@ -116,12 +116,12 @@ void RTC_IRQHandler(void)
     RTC_Get();//更新时间
 //    sprintf(DBG_BUF, "Alarm Time:%d-%d-%d %d:%d:%d\n", calendar.w_year, calendar.w_month, calendar.w_date, calendar.hour, calendar.min, calendar.sec); //输出闹铃时间
 //    DBG(DBG_BUF);
-		//timeout_time = Get_Flash_TimeOut(FLASH_SAVE_ADDR);
+		//timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
 		//if(BKP_ReadBackupRegister(BKP_DR2) || BKP_ReadBackupRegister(BKP_DR3))	//判断如果超时期限不是0的话说明超时时间被设置过
-		if(Get_Flash_TimeOut(FLASH_SAVE_ADDR+4) == 0xaaaaaaaa)	//判断如果超时期限不是全f的话说明超时时间被设置过
+		if(Flash_Read_Number(FLASH_SAVE_ADDR+4) == 0xaaaaaaaa)	//判断如果超时期限不是全f的话说明超时时间被设置过
 		{
 			curruent_time = RTC_GetCounter();
-			timeout_time = Get_Flash_TimeOut(FLASH_SAVE_ADDR);
+			timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
 			//timeout_time = BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16);
 			
 			if((curruent_time >= timeout_time) && (s_Powerkey.timeout_flag == 0))

@@ -26,6 +26,9 @@
 
 //³¬Ê±Ê±¼ä±£´æÔÚFLASHÖĞµÄµØÖ·
 #define FLASH_SAVE_ADDR  0X0800F000		//ÉèÖÃFLASH ±£´æµØÖ·(±ØĞëÎªÅ¼Êı£¬ÇÒÆäÖµÒª´óÓÚ±¾´úÂëËùÕ¼ÓÃFLASHµÄ´óĞ¡+0X08000000)
+#define FLASH_TIMEOUT_FLAG FLASH_SAVE_ADDR //timeout_flagµÄµØÖ·
+#define FLASH_TIMEOUT FLASH_SAVE_ADDR+4 //timeoutµÄµØÖ·
+#define FLASH_FIRMWARE_FLAG FLASH_SAVE_ADDR+8 //firmware_flagµÄµØÖ·
  
 
 u16 STMFLASH_ReadHalfWord(u32 faddr);		  //¶Á³ö°ë×Ö  
@@ -36,8 +39,11 @@ void STMFLASH_Read(u32 ReadAddr,u16 *pBuffer,u16 NumToRead);   		//´ÓÖ¸¶¨µØÖ·¿ªÊ
 
 //²âÊÔĞ´Èë
 void Test_Write(u32 WriteAddr,u16 WriteData);								   
-void Set_Flash_TimeOut(u32 timeout_count, u32 wirte_addr);
-u32 Get_Flash_TimeOut(u32 wirte_addr);
+void Flash_Write_Number(u32 timeout_count, u32 wirte_addr);
+u32 Flash_Read_Number(u32 wirte_addr);
+void Flash_Write_Str(u32 flash_addr,u8 *write_buf,u32 size);
+void Flash_Read_Str(u32 flash_addr,u8 *read_buf,u32 size);
+
 #endif
 
 

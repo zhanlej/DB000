@@ -116,7 +116,7 @@ void Test_Write(u32 WriteAddr,u16 WriteData)
 	STMFLASH_Write(WriteAddr,&WriteData,1);//写入一个字 
 }
 
-void Set_Flash_TimeOut(u32 timeout_count, u32 wirte_addr)
+void Flash_Write_Number(u32 timeout_count, u32 wirte_addr)
 {
 	u16 timeout_str[2];
 	timeout_str[0] = timeout_count & 0xffff;
@@ -124,7 +124,7 @@ void Set_Flash_TimeOut(u32 timeout_count, u32 wirte_addr)
 	STMFLASH_Write(wirte_addr,(u16*)timeout_str,2);
 }
 
-u32 Get_Flash_TimeOut(u32 wirte_addr)
+u32 Flash_Read_Number(u32 wirte_addr)
 {
 	u16 timeout_str[2];
 	u32 timeout_count;
@@ -133,7 +133,36 @@ u32 Get_Flash_TimeOut(u32 wirte_addr)
 	return timeout_count;
 }
 
+#define FLASHBUF_SIZE 128
+u16 flashbuf[FLASHBUF_SIZE]; 
+void Flash_Write_Str(u32 flash_addr,u8 *write_buf,u32 size)
+{
+	
+	u16 t;
+	u16 i=0;
+	u16 temp;
+	u32 fwaddr=flash_addr;//当前写入的地址
+	u8 *dfu=write_buf;
+	for(t=0;t<size;t+=2)
+	{						    
+		temp=(u16)dfu[1]<<8;
+		temp+=(u16)dfu[0];	  
+		dfu+=2;//偏移2个字节
+		flashbuf[i++]=temp;	    
+		if(i==FLASHBUF_SIZE)
+		{
+			i=0;
+			STMFLASH_Write(fwaddr,flashbuf,FLASHBUF_SIZE);	
+			fwaddr+=(FLASHBUF_SIZE*2);//偏移256  16=2*8.所以要乘以2.
+		}
+	}
+	if(i)STMFLASH_Write(fwaddr,flashbuf,i);//将最后的一些内容字节写进去.  
+}
 
+void Flash_Read_Str(u32 flash_addr,u8 *read_buf,u32 size)
+{
+	STMFLASH_Read(flash_addr, (u16*)read_buf, size/2);
+}
 
 
 

@@ -47,7 +47,7 @@ volatile unsigned char fan_level = 0; //自动模式下的速度档位
 short All_State = initialWAITOK;
 char http_buf[512];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
-char deviceID[20] = "200034";
+char deviceID[20] = "200035";
 MQTTString topicString = MQTTString_initializer;
 unsigned char mqtt_buf[MQTT_SEND_SIZE];   
 int mqtt_buflen = sizeof(mqtt_buf); 
@@ -63,6 +63,8 @@ unsigned char internal_flag = 0;
 
 int main()
 {
+	__enable_irq(); //使能所有中断
+	
 	delay_init();	//延时函数初始化
   Fifo_All_Initialize();	//fifo初始化
   RCC_Configuration(); //时钟配置
@@ -85,7 +87,7 @@ int main()
 	RTC_Init(2017, 1, 1, 0, 0, 0);						//实时时钟初始化，用来限制用户超过租期不能使用。
 	//Timer4_init();	//TIM+DMA方式控制空气质量灯
 
-	DBG("Open MUC!!!!");
+	DBG("APP V1.0!!!!");
 	sprintf(DBG_BUF, "\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	DBG(DBG_BUF);
 	beep_on(BEEP_TIME);
@@ -144,7 +146,7 @@ int main()
 
 void RCC_Configuration(void)
 {
-  SystemInit();
+//  SystemInit();
   RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
   RCC_APB2PeriphClockCmd( RCC_APB2Periph_USART1, ENABLE);
   RCC_APB1PeriphClockCmd( RCC_APB1Periph_USART2, ENABLE);
@@ -717,12 +719,17 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 {
   char * mode_tmp;
   char * power_tmp;
+	char * firmware_cmd;
 	int rtc_count;
 	int timeout_count;
+	u32 firmware_flag = 0;
   cJSON *mqtt_recv_root = NULL;
 	cJSON *RTC_obj = NULL;
-	cJSON *timeout_obj = NULL;
+	cJSON *firmware_obj = NULL;
 	char * out;
+	
+	//for debug
+	u32 test_flag = 0;
 
   sprintf(DBG_BUF, "MQTT recive data: %s, data_len: %d", recv_data, data_len);
   DBG(DBG_BUF);
@@ -745,8 +752,8 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 				{
 					sprintf(DBG_BUF, "expiresAt = %d", timeout_count);
 					DBG(DBG_BUF);
-					Set_Flash_TimeOut(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
-					Set_Flash_TimeOut(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
+					Flash_Write_Number(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
+					Flash_Write_Number(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
 				}
 				else DBG("expiresAt number is Error");
 			}
@@ -831,31 +838,41 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 			RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
     }
 		
-		//处理time_out数据
-		timeout_obj = cJSON_GetObjectItem(mqtt_recv_root, "time_out");
-		if(timeout_obj != NULL)
-    {
-			//用时间戳的数据格式
-			timeout_count = cJSON_GetObjectItem(mqtt_recv_root, "time_out")->valueint;
-			Set_Flash_TimeOut(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
-			Set_Flash_TimeOut(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
-			//timeout_count += 28800;	//时间戳是从1970-1-1 08:00:00开始的，而我们的算法是从1970-1-1 00:00:00，因此需要加上相应的秒数
-//			PWR_BackupAccessCmd(ENABLE);	//使能后备寄存器访问
-//			BKP_WriteBackupRegister(BKP_DR2, timeout_count & 0xffff);	//向后备寄存器BKP_DR2中写入超时时间的低16位
-//			BKP_WriteBackupRegister(BKP_DR3, timeout_count>>16 & 0xffff);	//向后备寄存器BKP_DR2中写入超时时间的高16位
-    }
-		
 		//返回断网记录数据
 		if(cJSON_GetObjectItem(mqtt_recv_root, "GPRS_RECORD") != NULL)
 		{
 			SendJson(GPRS_RECORD_MODE);
 		}
 		
-		//将收到的JSON数劲添加基站定位的数据然后立即返回，类似回应消息
+		//处理firmware update数据
+		firmware_obj = cJSON_GetObjectItem(mqtt_recv_root, "firmware");
+		if(firmware_obj != NULL)
+    {
+			if(cJSON_GetObjectItem(firmware_obj, "cmd") != NULL)
+			{
+				firmware_cmd = cJSON_GetObjectItem(firmware_obj, "cmd")->valuestring;
+				if(!strcmp(firmware_cmd, "update"))
+				{
+					Flash_Write_Number(firmware_flag, FLASH_FIRMWARE_FLAG);
+					test_flag = Flash_Read_Number(FLASH_FIRMWARE_FLAG);
+					sprintf(DBG_BUF, "test_flag = %d", test_flag);
+					DBG(DBG_BUF);
+					//重启
+					__disable_fault_irq();   
+					NVIC_SystemReset();
+					while(1);
+				}
+				else DBG("cmd != update");
+			}
+			else DBG("cJSON_GetObjectItem(firmware_obj, \"cmd\") == NULL");
+
+    }
+		else	DBG("firmware_obj == NULL");
+		
+		//将收到的JSON数据立即返回，类似回应消息
 		out = cJSON_Print(mqtt_recv_root);			
 		strcpy(return_data, out);
-    *return_len = strlen(payload);
-		sprintf(DBG_BUF, "return_data = %s， return_len = %d", return_data, *return_len);
+
 		DBG(DBG_BUF);		
 		
 		//必须释放out的空间，否则会溢出
@@ -865,8 +882,10 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 	{
 		DBG("mqtt_recv_root is NULL!");
 		strcpy(return_data, "recive data is error!");
-    *return_len = strlen(payload);
 	}
+	
+	*return_len = strlen(payload);
+	sprintf(DBG_BUF, "return_data = %s， return_len = %d", return_data, *return_len);
 
   //必须释放json的空间，否则会溢出
   cJSON_Delete(mqtt_recv_root);
