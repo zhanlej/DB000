@@ -83,7 +83,8 @@ void STMFLASH_Write(u32 WriteAddr,u16 *pBuffer,u16 NumToWrite)
 			secpos++;				//扇区地址增1
 			secoff=0;				//偏移位置为0 	 
 		   	pBuffer+=secremain;  	//指针偏移
-			WriteAddr+=secremain;	//写地址偏移	   
+			//WriteAddr+=secremain;	//写地址偏移	   
+			WriteAddr+=secremain*2; //写地址偏移(16位数据地址,需要*2) 原来代码此处有BUG，需要修改为*2才能正确执行。
 		   	NumToWrite-=secremain;	//字节(16位)数递减
 			if(NumToWrite>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//下一个扇区还是写不完
 			else secremain=NumToWrite;//下一个扇区可以写完了
