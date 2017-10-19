@@ -12,10 +12,10 @@ void TIM1_Int_Init(void)
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 
   //TIM1_CHN1 GPIO初始化
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   /* Time base configuration */
   TIM_TimeBaseStructure.TIM_Period = 1000 - 1; // 72kHz
@@ -56,9 +56,9 @@ void TIM1_Int_Init(void)
 void beep_on(unsigned int time)
 {
 #ifdef ACTIVE_BEEP
-  GPIO_SetBits(GPIOB, GPIO_Pin_13);
+  BUZZER_PIN = 1;
   delay_ms(time);
-  GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+  BUZZER_PIN = 0;
 #else
   int time_array[6] = {19, 17, 15, 18, 19, 20};
 
@@ -69,7 +69,7 @@ void beep_on(unsigned int time)
   delay_ms(time);
   TIM_CtrlPWMOutputs(TIM1, DISABLE);
   TIM_Cmd(TIM1, DISABLE); //使能 TIM1
-  GPIO_ResetBits(GPIOB, GPIO_Pin_13);
+  BUZZER_PIN = 0;
 //	if(time_count >= 1000) time_count = 0;
 //	else time_count += 100;
 #endif

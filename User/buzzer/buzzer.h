@@ -3,6 +3,7 @@
 
 #include "sys.h"
 
+#define BUZZER_PIN PAout(8)
 #define BEEP_TIME 200
 //#define ACTIVE_BEEP 1
 

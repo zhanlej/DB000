@@ -96,6 +96,9 @@ int main()
 	sprintf(DBG_BUF, "U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
 	DBG(DBG_BUF);
 	
+	//往FLASH_FIRMWARE_FLAG地址写1表示APP程序正常运行
+	if(Flash_Read_Number(FLASH_FIRMWARE_FLAG) != 1) Flash_Write_Number(1, FLASH_FIRMWARE_FLAG);
+	
 	//给甲醛传感器发送命令接收返回数据
 //	Send_DSHCHO_Cmd();
 //	delay_ms(100);
@@ -722,7 +725,11 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 	char * firmware_cmd;
 	int rtc_count;
 	int timeout_count;
-	u32 firmware_flag = 0;
+	char *ftp_server;
+	char *ftp_username;
+	char *ftp_passwd;
+	char *ftp_filename;
+	char *ftp_path;
   cJSON *mqtt_recv_root = NULL;
 	cJSON *RTC_obj = NULL;
 	cJSON *firmware_obj = NULL;
@@ -853,14 +860,40 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 				firmware_cmd = cJSON_GetObjectItem(firmware_obj, "cmd")->valuestring;
 				if(!strcmp(firmware_cmd, "update"))
 				{
-					Flash_Write_Number(firmware_flag, FLASH_FIRMWARE_FLAG);
-					test_flag = Flash_Read_Number(FLASH_FIRMWARE_FLAG);
-					sprintf(DBG_BUF, "test_flag = %d", test_flag);
-					DBG(DBG_BUF);
-					//重启
-					__disable_fault_irq();   
-					NVIC_SystemReset();
-					while(1);
+					//将ftp的参数写入到片内flash中
+					if(cJSON_GetObjectItem(firmware_obj, "server") != NULL &&
+					cJSON_GetObjectItem(firmware_obj, "username") != NULL &&
+					cJSON_GetObjectItem(firmware_obj, "passwd") != NULL &&
+					cJSON_GetObjectItem(firmware_obj, "filename") != NULL &&
+					cJSON_GetObjectItem(firmware_obj, "path") != NULL)
+					{
+						ftp_server = cJSON_GetObjectItem(firmware_obj, "server")->valuestring;
+						ftp_username = cJSON_GetObjectItem(firmware_obj, "username")->valuestring;
+						ftp_passwd = cJSON_GetObjectItem(firmware_obj, "passwd")->valuestring;
+						ftp_filename = cJSON_GetObjectItem(firmware_obj, "filename")->valuestring;
+						ftp_path = cJSON_GetObjectItem(firmware_obj, "path")->valuestring;
+						sprintf(DBG_BUF, "strlen = %d, %d, %d, %d, %d\r\n", strlen(ftp_server), strlen(ftp_username), strlen(ftp_passwd), strlen(ftp_filename), strlen(ftp_path));
+						DBG(DBG_BUF);
+						if(strlen(ftp_server)<32&&strlen(ftp_username)<32&&strlen(ftp_passwd)<32&&strlen(ftp_filename)<32&&strlen(ftp_path)<32)
+						{
+							Flash_Write_Str(FLASH_FTP_SERVER, (u8 *)ftp_server, FTP_PARAM_SIZE);
+							Flash_Write_Str(FLASH_FTP_USERNAME, (u8 *)ftp_username, FTP_PARAM_SIZE);
+							Flash_Write_Str(FLASH_FTP_PASSWD, (u8 *)ftp_passwd, FTP_PARAM_SIZE);
+							Flash_Write_Str(FLASH_FTP_FILENAME, (u8 *)ftp_filename, FTP_PARAM_SIZE);
+							Flash_Write_Str(FLASH_FTP_PATH, (u8 *)ftp_path, FTP_PARAM_SIZE);
+												
+							Flash_Write_Number(0, FLASH_FIRMWARE_FLAG);	//写0表示要更新固件
+							test_flag = Flash_Read_Number(FLASH_FIRMWARE_FLAG);
+							sprintf(DBG_BUF, "test_flag = %d", test_flag);
+							DBG(DBG_BUF);
+							//重启
+							__disable_fault_irq();   
+							NVIC_SystemReset();
+							while(1);
+						}
+						else DBG("parame size >= 32!");
+					}
+					else DBG("parame is error!");
 				}
 				else DBG("cmd != update");
 			}

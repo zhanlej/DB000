@@ -233,12 +233,12 @@ void USART2_IRQHandler(void)//串口2中断服务程序  PM2.5
   */
 void USART3_IRQHandler(void)
 {
-  unsigned char rec_data;
+  //unsigned char rec_data;
   if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
   {
     USART_ClearITPendingBit(USART3, USART_IT_RXNE);
     /* Read one byte from the receive data register */
-    rec_data = USART_ReceiveData(USART3);
+    //rec_data = USART_ReceiveData(USART3);
     //Recive_HCHO(rec_data);
   }
 }
