@@ -352,14 +352,7 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 
 void restart_MCU(void)
 {
-  closeTCP();
   GSM_restart();
-//  delay(1000);
-//  __set_FAULTMASK(1);
-//  NVIC_SystemReset();
-	VBAT = 1;
-	beep_on(1000);
-	VBAT = 0;
 	All_State = initialWAITOK;
 	return;
 }

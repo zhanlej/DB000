@@ -1,6 +1,6 @@
 #include "sys.h"
 
-#define SWIO_DEBUG
+//#define SWIO_DEBUG
 
 //ALL_Status
 #define initialWAITOK -1

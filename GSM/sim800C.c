@@ -157,6 +157,7 @@ int GSMInit(const char *addr, uint32_t port, char *http_data)
 	static u8 first_flag = 1;
 	
 	VBAT = 0;
+	POWERKEY = 0;
 	//open the GSM
 	delay(1000);
 	//GPIO_SetBits(GPIOB, GPIO_Pin_0);
@@ -480,11 +481,14 @@ int SetBaud(uint32_t baud)
 
 void GSM_restart(void)
 {
-	if(sATCPOWD(1)) DBG("GSM restart!");
-	else DBG("GSM restart FAILED!");
+	DBG("GSM_restart()");
+	POWERKEY = 1;
+	delay(2500);
+	POWERKEY = 0;
+	delay(8000);
 	VBAT = 1;
-	delay(1000);
-	VBAT = 0;
+	POWERKEY = 1;
+	delay(4500);
 }
 
 //ÇÐ»»µ½AP+stationÄ£Ê½
