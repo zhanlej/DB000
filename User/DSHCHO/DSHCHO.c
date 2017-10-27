@@ -1,5 +1,5 @@
 #include "DSHCHO.h"
-#include "uart1.h"
+#include "uart.h"
 #include "stdio.h"
 
 int Conce_HCHO = 0;				//¼×È©Å¨¶È
@@ -65,17 +65,16 @@ void Recive_HCHO(u8 Res)
 				case 2: data_equivalent = 10;	break;
 				case 3: data_equivalent = 100;	break;
 				case 4: data_equivalent = 1000;	break;
-				default: DBG("data_equivalent is error"); return;
+				default: printf("data_equivalent is error\r\n"); return;
 			}
 			//Conce_HCHO = (float)((DSHCHO_RX_BUF[6]<<8)+DSHCHO_RX_BUF[7])/data_equivalent;
 			Conce_HCHO = (DSHCHO_RX_BUF[6]<<8)+DSHCHO_RX_BUF[7];
-			sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %d", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
-			//DBG(DBG_BUF);
+			//printf("DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %d\r\n", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
 			state = RECV_WAIT;
 		}
 		else
 		{
-			DBG("HCHO check_short is error!");
+			printf("HCHO check_short is error!\r\n");
 			return;
 		}
 	}

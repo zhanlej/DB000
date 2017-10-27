@@ -7,7 +7,7 @@
 #include "serialportAPI.h"
 #include "sim800C.h"
 #include "stringAPIext.h"
-#include "uart1.h"
+#include "uart.h"
 #include "MyFifo.h"
 #include "string.h"
 #include "stdio.h"
@@ -112,7 +112,7 @@ void AutoLink(void)
   while (status != STATUS_GETIP)
   {
     uint32_t start_time = millis();
-    DBG("start auto link");
+    printf("start auto link\r\n");
     //10s自动连接时间
     while ((millis() - start_time < 10000) && status != STATUS_GETIP)
     {
@@ -124,13 +124,13 @@ void AutoLink(void)
     if (status != STATUS_GETIP)
     {
       char link_msg[RECV_BUF_SIZE];
-      DBG("start smartlink");
+      printf("start smartlink\r\n");
       stopSmartLink();
 
       if (1 == smartLink((uint8_t)ESP_AIR, link_msg))
       {
         stopSmartLink(); //无论配网是否成功，都需要释放快连所占的内存
-        DBG(link_msg);
+        printf("%s\r\n", link_msg);
         start_time = millis();//等待获取IP
         while ((millis() - start_time < 5000) && status != STATUS_GETIP)
         {
@@ -143,12 +143,12 @@ void AutoLink(void)
       {
         stopSmartLink();
         delay(500);
-        DBG("link AP fail");
+        printf("link AP fail\r\n");
         //restart();
       }
     }
   }
-  DBG("link AP OK");
+  printf("link AP OK\r\n");
   //sATCWAUTOCONN(0); //开启自动连接模式
 }
 
@@ -192,10 +192,10 @@ int ConectTest(void){
 		else break;
 	}
 	if(i >= 40) return 0;
-	DBG("AT is OK!\n");
-	if(recvFind("SMS Ready", 5000)) DBG("SMS Ready!\n"); //等待30S
+	printf("AT is OK!\r\n");
+	if(recvFind("SMS Ready", 5000)) printf("SMS Ready!\r\n"); //等待30S
 //	if(!recvFind("SMS Ready", 30000)) return 0; //等待30S
-//	DBG("SMS Ready!\n");
+//	printf("SMS Ready!\r\n");
 //	delay(AT_DELAY);
 	
 	return 1;
@@ -213,7 +213,7 @@ int CheckState(void)
 		else delay(AT_DELAY);
 	}
 	if(i >= 30) return 0;
-	DBG("CPIN=READY!");
+	printf("CPIN=READY!\r\n");
 	delay(AT_DELAY);
 	
 	for(i = 0; i < 30; i++)
@@ -223,8 +223,7 @@ int CheckState(void)
 		else delay(AT_DELAY);
 	}
 	if(i >= 30) return 0;
-	sprintf(DBG_BUF,"csq = %d\n", sim_csq);
-	DBG(DBG_BUF);
+	printf("csq = %d\r\n", sim_csq);
 	delay(AT_DELAY);
 	
 	for(i=0; i<30; i++){
@@ -233,7 +232,7 @@ int CheckState(void)
 		else delay(AT_DELAY);
 	}
 	if(i >= 30) return 0;
-	DBG("CREG_stat=1!");
+	printf("CREG_stat=1!\r\n");
 	delay(AT_DELAY);
 	
 	for(i=0; i<30; i++){
@@ -242,28 +241,27 @@ int CheckState(void)
 		else delay(AT_DELAY);
 	}
 	if(i >= 30) return 0;
-	DBG("CGATT = 1!");
+	printf("CGATT = 1!\r\n");
 	
 #ifdef RF_TEST
 	delay(5000);
 //	if(!sATD(112)) return 0;
-//	DBG("sATD(112) is OK");
+//	printf("sATD(112) is OK\r\n");
 	if(!sATS0(1)) return 0;
-	DBG("sATS0(1) is OK!");
+	printf("sATS0(1) is OK!\r\n");
 	while(1);
 #endif
 	
 #ifdef TRANS_MODE
 	if(!sATCIPMODE(1)) return 0;
-	DBG("sATCIPMODE = 1 is OK!");
+	printf("sATCIPMODE = 1 is OK!\r\n");
 #endif
 	if(!sATCSTT("CMNET")) return 0;
-	DBG("CSTT = CMNET is OK!");
+	printf("CSTT = CMNET is OK!\r\n");
 	if(!eATCIICR()) return 0;
-	DBG("CIICR is OK!");
+	printf("CIICR is OK!\r\n");
 	if(!eATCIFSR(sim_ip)) return 0;
-	sprintf(DBG_BUF,"sim_ip = %s\n", sim_ip);
-	DBG(DBG_BUF);
+	printf("sim_ip = %s\r\n", sim_ip);
 	return 1;
 }
 
@@ -274,7 +272,6 @@ const char sslfile_crt [FILESIZE+2] = "dd";
 #define FSWRITE_TIMEOUT 100
 int FSInit(void)
 {
-	char DBG_BUF[2048];
 	const char * drive = "C:";
 	const char * filename = "ca.crt";
 	char path_buf[20];
@@ -283,55 +280,44 @@ int FSInit(void)
 	u32 filesize;
 	
 	if(!sATFSDRIVE(0)) return 0;
-	DBG("sATFSDRIVE(0) is OK");
+	printf("sATFSDRIVE(0) is OK\r\n");
 	sprintf(path_buf, "%s\\", drive);
 	if(!sATFSLS(path_buf, recv_buf)) return 0;
 	//if(!sATFSLS("C:\\", recv_buf)) return 0;
-	DBG(recv_buf);
+	printf("%s\r\n", recv_buf);
 	sprintf(path_buf, "%s\\%s", drive, filename);
 	if(sATFSREAD(path_buf, 0, FILESIZE, 0, recv_buf))
 	{
-		sprintf(DBG_BUF, "read %s is %s", path_buf, recv_buf);
-		DBG(DBG_BUF);
+		printf("read %s is %s\r\n", path_buf, recv_buf);
 		if(!strcmp(recv_buf, sslfile_crt))
 		{
-			sprintf(DBG_BUF, "recv_buf == sslfile_crt");
-			DBG(DBG_BUF);
+			printf("recv_buf == sslfile_crt\r\n");
 			return 1;
 		}
 		else
 		{
-			sprintf(DBG_BUF, "recv_buf != sslfile_crt");
-			DBG(DBG_BUF);
+			printf("recv_buf != sslfile_crt\r\n");
 		}
 	}
 	
 	if(!sATFSCREATE(path_buf)) return 0;
-	sprintf(DBG_BUF, "creat %s is OK", path_buf);
-	DBG(DBG_BUF);
+	printf("creat %s is OK\r\n", path_buf);
 	if(!sATFSFLSIZE(path_buf, &filesize)) return 0;
-	sprintf(DBG_BUF, "%s size is %d", path_buf, filesize);
-	DBG(DBG_BUF);	
-	sprintf(DBG_BUF, "strlen(sslfile_crt) = %d", strlen(sslfile_crt));
-	DBG(DBG_BUF);
+	printf("%s size is %d\r\n", path_buf, filesize);
+	printf("strlen(sslfile_crt) = %d\r\n", strlen(sslfile_crt));
 	if(strlen(sslfile_crt) != FILESIZE) return 0;
 	if(!sATFSWRITE(path_buf, 0, FILESIZE, FSWRITE_TIMEOUT, sslfile_crt)) return 0;
-	sprintf(DBG_BUF, "%s write %s is OK", path_buf, sslfile_crt);
-	DBG(DBG_BUF);
+	printf("%s write %s is OK\r\n", path_buf, sslfile_crt);
 	if(!sATFSFLSIZE(path_buf, &filesize)) return 0;
-	sprintf(DBG_BUF, "%s size is %d", path_buf, filesize);
-	DBG(DBG_BUF);
+	printf("%s size is %d\r\n", path_buf, filesize);
 	if(!sATFSREAD(path_buf, 0, FILESIZE, 0, recv_buf)) return 0;
-	sprintf(DBG_BUF, "read %s is %s", path_buf, recv_buf);
-	DBG(DBG_BUF);
+	printf("read %s is %s\r\n", path_buf, recv_buf);
 	//sATFSDEL(char * filename);
 	
 	if(!eATGSV(recv_buf)) return 0;
-	sprintf(DBG_BUF, "eATGSV recv is %s", recv_buf);
-	DBG(DBG_BUF);
+	printf("eATGSV recv is %s\r\n", recv_buf);
 	if(!qATSSLSETCERT(recv_buf)) return 0;
-	sprintf(DBG_BUF, "qATSSLSETCERT recv is %s", recv_buf);
-	DBG(DBG_BUF);
+	printf("qATSSLSETCERT recv is %s\r\n", recv_buf);
 	return 1;
 }
 
@@ -339,16 +325,15 @@ int TCPInit(const char *addr, uint32_t port)
 {
 #ifdef SSL_MODE
 	if(!sATCIPSSL(1)) return 0;
-	DBG("CIPSSL = 1 OK");
+	printf("CIPSSL = 1 OK\r\n");
 #endif
 	if(!sATCIPHEAD(1)) return 0;
-	DBG("CIPHEAD = 1 OK");
+	printf("CIPHEAD = 1 OK\r\n");
 	if(!createTCP(addr, port)) return 0;
-	sprintf(DBG_BUF, "create tcp ok! server_ip = %s, port = %d", addr, port);
-	DBG(DBG_BUF);
+	printf("create tcp ok! server_ip = %s, port = %d\r\n", addr, port);
 #ifndef TRANS_MODE
 	if(!eATCIPSTATUS("CONNECT OK")) return 0;
-	DBG("STATUS: CONNECT OK!");
+	printf("STATUS: CONNECT OK!\r\n");
 #endif
 	
 	return 1;
@@ -357,15 +342,13 @@ int TCPInit(const char *addr, uint32_t port)
 int LSB_API_data(void)
 {
 	if(!eATGSN(sim_imei)) return 0;
-	sprintf(DBG_BUF, "sim_imei = %s", sim_imei);
-	DBG(DBG_BUF);
+	printf("sim_imei = %s\r\n", sim_imei);
 	if(!sATCREG(2)) return 0;
-	DBG("AT+CREG = 2 is OK!");
+	printf("AT+CREG = 2 is OK!\r\n");
 	if(!qATCREG2(&sim_loc, &sim_ci)) return 0;
-	sprintf(DBG_BUF, "sim_loc = %d, sim_ci = %d", sim_loc, sim_ci);
-	DBG(DBG_BUF);
+	printf("sim_loc = %d, sim_ci = %d\r\n", sim_loc, sim_ci);
 	if(!sATCREG(0)) return 0;
-	DBG("AT+CREG = 0 is OK!");
+	printf("AT+CREG = 0 is OK!\r\n");
 		
 	return 1;
 }
@@ -378,30 +361,30 @@ int HttpInit(char * http_data)
 	
 	/*http init*/
 	if(!sATSAPBR1(3,1,"CONTYPE","GPRS")) return 0;
-	DBG("http 1 OK!");
+	printf("http 1 OK!\r\n");
 	if(!sATSAPBR1(3,1,"APN","CMNET")) return 0;
-	DBG("http 2 OK!");
+	printf("http 2 OK!\r\n");
 	if(!sATSAPBR2(1,1)) return 0;
-	DBG("http 3 OK!");
+	printf("http 3 OK!\r\n");
 	if(!sATSAPBR2(2,1)) return 0;
-	DBG("http 4 OK!");
+	printf("http 4 OK!\r\n");
 	if(!eATHTTPINIT()) return 0;
-	DBG("http 5 OK!");
+	printf("http 5 OK!\r\n");
 	if(!sATHTTPPARA("CID","1")) return 0;
-	DBG("http 6 OK!");
+	printf("http 6 OK!\r\n");
 	sprintf(http_send_data, "http://apilocate.amap.com/position?accesstype=0&imei=%s&cdma=0&bts=460,00,%d,%d,%d&serverip=%s&output=josn&key=%s",sim_imei,sim_loc,sim_ci,(sim_csq*2-113),sim_ip,GAODE_API_KEY);
-	DBG(http_send_data);
+	printf("%s\r\n", http_send_data);
 	if(!sATHTTPPARA("URL",http_send_data)) return 0;
 	//if(!sATHTTPPARA("URL","http://apilocate.amap.com/position?accesstype=0&imei=862631037454138&cdma=0&bts=460,00,4566,6758,-101&nearbts=460,00,4566,8458,-110|460,00,4566,31248,-107&serverip=10.76.18.147&output=josn&key=9eced1b11c8c7ffd5447eb0ba28748d8")) return 0;
-	DBG("http 7 OK!");
+	printf("http 7 OK!\r\n");
 	if(!sATHTTPACTION(0, http_action_status)) return 0;
-	DBG("http 8 OK!");
+	printf("http 8 OK!\r\n");
 	if(!qATHTTPREAD(http_recv_data)) return 0;
 	sprintf(http_data,"{%s", http_recv_data);
-	DBG(http_data);
-	DBG("http 9 OK!");
+	printf("%s\r\n", http_data);
+	printf("http 9 OK!\r\n");
 	if(!eATHTTPTERM()) return 0;
-	DBG("http 10 OK!");
+	printf("http 10 OK!\r\n");
 	
 	return 1;
 }
@@ -409,9 +392,9 @@ int HttpInit(char * http_data)
 int NtpServer_Try(const char * ntp_server)
 {
 	if(!sATCNTP(ntp_server, 0)) return 0;
-	DBG("NTP 2 OK");
+	printf("NTP 2 OK\r\n");
 	if(!eATCNTP()) return 0;
-	DBG("NTP 3 OK");
+	printf("NTP 3 OK\r\n");
 	return 1;
 }
 
@@ -421,30 +404,27 @@ int SimNTP_get(void)
 	int i;
 	const char ntp_server[NTPTRY][20] = {"ntp1.aliyun.com","ntp2.aliyun.com","ntp3.aliyun.com","ntp4.aliyun.com","ntp5.aliyun.com","ntp6.aliyun.com","ntp7.aliyun.com","time.windows.com","time.nist.gov"};
 	if(!sATCNTPCID(1)) return 0;
-	DBG("NTP 1 OK");
+	printf("NTP 1 OK\r\n");
 	for(i = 0; i < NTPTRY; i++)
 	{
 		if(!NtpServer_Try(ntp_server[i]))
 		{
-			sprintf(DBG_BUF, "NTP server try %d is error", i+1);
-			DBG(DBG_BUF);
+			printf("NTP server try %d is error\r\n", i+1);
 		}
 		else break;
 	}
 	if(i >= NTPTRY) return 0;
-	DBG("NTP server try OK");
+	printf("NTP server try OK\r\n");
 	if(!qATCCLK(&calendar_tmp)) return 0;
-	DBG("NTP 4 OK");
+	printf("NTP 4 OK\r\n");
 	RTC_Get();
-	sprintf(DBG_BUF, "current RTC: %d/%d/%d %d:%d:%d", calendar.w_year,calendar.w_month,calendar.w_date,calendar.hour,calendar.min,calendar.sec);
-	DBG(DBG_BUF);
+	printf("current RTC: %d/%d/%d %d:%d:%d\r\n", calendar.w_year,calendar.w_month,calendar.w_date,calendar.hour,calendar.min,calendar.sec);
 	if(calendar_tmp.w_year!=calendar.w_year || calendar_tmp.w_month!=calendar.w_month || calendar_tmp.w_date!=calendar.w_date || calendar_tmp.hour!=calendar.hour || calendar_tmp.min!=calendar.min)
 	{
-		DBG("calendar_tmp != calendar, RTC need to update!");
+		printf("calendar_tmp != calendar, RTC need to update!\r\n");
 		RTC_Set(calendar_tmp.w_year,calendar_tmp.w_month,calendar_tmp.w_date,calendar_tmp.hour,calendar_tmp.min,calendar_tmp.sec);
 		RTC_Get();
-		sprintf(DBG_BUF, "current RTC: %d/%d/%d %d:%d:%d", calendar.w_year,calendar.w_month,calendar.w_date,calendar.hour,calendar.min,calendar.sec);
-		DBG(DBG_BUF);
+		printf("current RTC: %d/%d/%d %d:%d:%d\r\n", calendar.w_year,calendar.w_month,calendar.w_date,calendar.hour,calendar.min,calendar.sec);
 	}
 
 	return 1;
@@ -481,7 +461,7 @@ int SetBaud(uint32_t baud)
 
 void GSM_restart(void)
 {
-	DBG("GSM_restart()");
+	printf("GSM_restart()\r\n");
 	POWERKEY = 1;
 	delay(2500);
 	POWERKEY = 0;
@@ -546,14 +526,13 @@ int createTCP(const char *addr, uint32_t port)
 
 void closeTCP(void)
 {
-	if(eATCIPCLOSE()) DBG("close TCP is OK!");
-	else DBG("close TCP is FAILED!");
+	if(eATCIPCLOSE()) printf("close TCP is OK!\r\n");
+	else printf("close TCP is FAILED!\r\n");
 }
 
 int sim800C_send(const uint8_t *buffer, uint32_t len)
 {
-	sprintf(DBG_BUF, "---------- sim800C_send len = %d ----------", len);
-	DBG(DBG_BUF);
+	printf("---------- sim800C_send len = %d ----------\r\n", len);
   return sATCIPSENDSingle(buffer, len);
 }
 
@@ -572,8 +551,7 @@ int sim800C_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
   }
 	if(len != 0)
 	{
-		sprintf(DBG_BUF, "########## sim800C_recv len = %d ##########", len);
-		DBG(DBG_BUF);
+		printf("########## sim800C_recv len = %d ##########\r\n", len);
 	}
   return len;
 }
@@ -809,10 +787,10 @@ int eATCSQ(uint8_t *csq)
 int eATCSQ_TRANS(uint8_t *csq)
 {
 	if(!eEXIT_TRANS()) return 0;
-	DBG("eEXIT_TRANS is OK!");
+	printf("eEXIT_TRANS is OK!\r\n");
 	if(!eATCSQ(csq)) return 0;
 	if(!eATO()) return 0;
-	DBG("eATO is OK!");
+	printf("eATO is OK!\r\n");
 	return 1;
 }
 
@@ -963,7 +941,6 @@ int qATCREG2(unsigned int *lac, unsigned int *ci)
 		int32_t index2 = StringIndex(str_lac_ci, "\",\"") - 1;
     int32_t index3 = index2 + 4;
 		int32_t index4 = strlen(str_lac_ci)-2;
-		DBG(DBG_BUF);
     if (index2 != -1 && index4 != -1)
     {
       StringSubstring(str_lac, str_lac_ci, index1, index2);
@@ -1118,7 +1095,7 @@ int qATCCLK(_calendar_obj * calendar_ntp)
   ret = recvFindAndFilter("\r\nOK", "+CCLK: \"", "\"\r\n\r\nOK", buf, TIME_OUT);
 	if (ret != 1) return 0;
 	
-	DBG(buf);
+	printf("%s\r\n", buf);
 	buf_p = buf;
 	strncpy(year, buf_p, 2);
 	calendar_ntp->w_year = 2000 + atoi(year);
@@ -1137,8 +1114,7 @@ int qATCCLK(_calendar_obj * calendar_ntp)
 	buf_p+=3;
 	strncpy(sec, buf_p, 2);
 	calendar_ntp->sec = atoi(sec);
-	sprintf(DBG_BUF, "get NTP: %d/%d/%d %d:%d:%d", calendar_ntp->w_year,calendar_ntp->w_month,calendar_ntp->w_date,calendar_ntp->hour,calendar_ntp->min,calendar_ntp->sec);
-	DBG(DBG_BUF);
+	printf("get NTP: %d/%d/%d %d:%d:%d\r\n", calendar_ntp->w_year,calendar_ntp->w_month,calendar_ntp->w_date,calendar_ntp->hour,calendar_ntp->min,calendar_ntp->sec);
 	
   return 1;
 }
@@ -1359,7 +1335,7 @@ int eATCWSTARTSMART(uint8_t type, char *link_msg)
   SerialPrint("AT+CWSTARTSMART=", STRING_TYPE);
   SerialPrintln(&int_type, INT_TYPE);
   flag = recvFind("OK", TIME_OUT);
-  DBG("AT+CWSTARTSMART=3 is OK!\n");
+  printf("AT+CWSTARTSMART=3 is OK!\r\n");
   if(flag == 0) return flag;
   delay(50);//延时之后等待自动连接
   rx_empty();

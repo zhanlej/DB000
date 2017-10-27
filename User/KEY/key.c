@@ -1,6 +1,6 @@
 #include "key.h"
 #include "delay.h"
-#include "uart1.h"
+#include "uart.h"
 #include "string.h"
 #include "main.h"
 //#include "MyFifo.h"
@@ -88,11 +88,11 @@ void Pannelkey_Put(unsigned char KeyCode)
   // 定义一个队列 放入按键值
 	if(KeyCode == KEY_DOWN_Power)
   {
-    DBG("press!");
+    printf("press!\r\n");
   }
   else if(KeyCode == KEY_UP_Power)
   {
-		DBG("short press");
+		printf("short press\r\n");
 		switch(*mqtt_mode)
 		{
 			case '0':
@@ -119,14 +119,14 @@ void Pannelkey_Put(unsigned char KeyCode)
   }
   else if(KeyCode == KEY_LONG_Power)
   {
-    DBG("LONG PRESS");
+    printf("LONG PRESS\r\n");
 		strcpy(mqtt_mode, "0");
 		ModeCountrol();
 		SavePressLog();
   }
 	else
 	{
-		DBG("KeyCode is error!");
+		printf("KeyCode is error!\r\n");
 	}
 }
 

@@ -29,8 +29,7 @@
 #define SPEED2_LED PBout(8)
 #define SPEED3_LED PBout(9)
 
-
-void USART2_Config(void);
+void GPRS_USART(u32 baudRate);
 void RCC_Configuration(void);
 void NVIC_Configuration(void);
 void GPIO_Configuration(void);

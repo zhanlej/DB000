@@ -2,7 +2,7 @@
 //#include "usart.h"
 #include "rtc.h"
 #include "stdio.h"
-#include "uart1.h"
+#include "uart.h"
 //#include "exti.h"
 #include "key.h"
 #include "stmflash.h"
@@ -38,8 +38,7 @@ u8 RTC_Init(u32 year, u8 month, u8 day, u8 hour, u8 min, u8 sec)
 	
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);	//使能PWR和BKP外设时钟
   PWR_BackupAccessCmd(ENABLE);	//使能后备寄存器访问
-  sprintf(DBG_BUF, "%x", BKP_ReadBackupRegister(BKP_DR1));
-  DBG(DBG_BUF);
+  printf("%x\r\n", BKP_ReadBackupRegister(BKP_DR1));
   if (BKP_ReadBackupRegister(BKP_DR1) != 0x5050)		//从指定的后备寄存器中读出数据:读出了与写入的指定数据不相乎
   {
     BKP_DeInit();	//复位备份区域
@@ -114,8 +113,7 @@ void RTC_IRQHandler(void)
   if (RTC_GetITStatus(RTC_IT_SEC) != RESET)//秒钟中断
   {
     RTC_Get();//更新时间
-//    sprintf(DBG_BUF, "Alarm Time:%d-%d-%d %d:%d:%d\n", calendar.w_year, calendar.w_month, calendar.w_date, calendar.hour, calendar.min, calendar.sec); //输出闹铃时间
-//    DBG(DBG_BUF);
+//    printf("Alarm Time:%d-%d-%d %d:%d:%d\r\n", calendar.w_year, calendar.w_month, calendar.w_date, calendar.hour, calendar.min, calendar.sec); //输出闹铃时间
 		//timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
 		//if(BKP_ReadBackupRegister(BKP_DR2) || BKP_ReadBackupRegister(BKP_DR3))	//判断如果超时期限不是0的话说明超时时间被设置过
 		if(Flash_Read_Number(FLASH_SAVE_ADDR+4) == 0xaaaaaaaa)	//判断如果超时期限不是全f的话说明超时时间被设置过
@@ -126,7 +124,7 @@ void RTC_IRQHandler(void)
 			
 			if((curruent_time >= timeout_time) && (s_Powerkey.timeout_flag == 0))
 			{
-				DBG("time out!");
+				printf("time out!\r\n");
 				s_Powerkey.timeout_flag = 1;
 				//EXTI_DeInit();
 			}

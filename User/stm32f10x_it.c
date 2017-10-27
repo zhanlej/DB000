@@ -22,7 +22,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "uart1.h"
+#include "uart.h"
 #include "stm32f10x_it.h"
 #include "interface.h"
 #include "sim800C.h"
@@ -181,7 +181,7 @@ void TIM2_IRQHandler(void)
 //		{
 //			EXTI_DeInit();	//为了解决下面的操作对物理按键干扰而触发中断函数
 //			press_flag = 0;
-//			DBG("LONG PRESS");
+//			printf("LONG PRESS\r\n");
 //			strcpy(mqtt_mode, "0");
 //			ModeCountrol();
 //			SavePressLog();

@@ -6,7 +6,7 @@
 #include "key.h"
 #include "sim800c.h"
 #include "stmflash.h"
-#include "uart1.h"
+#include "uart.h"
 #include "rtc.h"
 //#include "DSHCHO.h"
 
@@ -156,9 +156,8 @@ void PressMode_group(cJSON *root)
   {
     cJSON_AddItemToArray(j_press, cJSON_CreateString(press_buf[i]));
 //			count2date(press_time_log[i]);
-//			sprintf(DBG_BUF, "%04d%02d%02d%02d%02d%02d", calendar_tmp.w_year, calendar_tmp.w_month, calendar_tmp.w_date, calendar_tmp.hour, calendar_tmp.min, calendar_tmp.sec);
-//			DBG(DBG_BUF);
-//			cJSON_AddItemToArray(press_time, cJSON_CreateString(DBG_BUF));
+//			sprintf(somevalue, "%04d%02d%02d%02d%02d%02d\r\n", calendar_tmp.w_year, calendar_tmp.w_month, calendar_tmp.w_date, calendar_tmp.hour, calendar_tmp.min, calendar_tmp.sec);
+//			cJSON_AddItemToArray(press_time, cJSON_CreateString(somevalue));
     cJSON_AddItemToArray(j_press_time, cJSON_CreateNumber(press_time_log[i]));
 		//cJSON_AddItemToArray(j_hcho, cJSON_CreateNumber(press_HCHO[i]));
     cJSON_AddItemToArray(j_c1, cJSON_CreateNumber(press_C1[i]));
@@ -217,7 +216,7 @@ void group_json(unsigned char mode)
       GprsRecordMode_group(root);
       break;
     default:
-      DBG("group_json 's mode is error!");
+      printf("group_json 's mode is error!\r\n");
       cJSON_Delete(root);
       return;
   }
@@ -226,9 +225,8 @@ void group_json(unsigned char mode)
   JSON_len = strlen(out);
   strcpy(payload, out);
 
-  sprintf(DBG_BUF, "JSON_len = %d", JSON_len);
-  DBG(DBG_BUF);
-  //DBG(out);
+  printf("JSON_len = %d\r\n", JSON_len);
+  //printf("%s\r\n", out);
 
   free(out);
   if(mode == GEO_MODE) cJSON_Delete(http_root);

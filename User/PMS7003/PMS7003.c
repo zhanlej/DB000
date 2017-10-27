@@ -1,5 +1,5 @@
 #include "PMS7003.h"
-#include "uart1.h"
+#include "uart.h"
 #include "stdio.h"
 #include "aqi.h"
 
@@ -71,13 +71,12 @@ void Recive_PM(u8 Res)
 			Max_PM = (Conce_PM2_5 > Conce_PM10) ? Conce_PM2_5 : Conce_PM10;
 			PM2_5_OK = 1;
 			AQI_Count(Conce_PM2_5, Conce_PM10, (int *)&AQI_2_5, (int *)&AQI_10, (int *)&AQI_Max);
-			sprintf(DBG_BUF, "PMS7003_RX_BUF = %x %x %x %x, Conce_PM2_5 = %d, Conce_PM10 = %d", PMS7003_RX_BUF[12], PMS7003_RX_BUF[13], PMS7003_RX_BUF[14], PMS7003_RX_BUF[15], Conce_PM2_5, Conce_PM10);
-			//DBG(DBG_BUF);
+			//printf("PMS7003_RX_BUF = %x %x %x %x, Conce_PM2_5 = %d, Conce_PM10 = %d\r\n", PMS7003_RX_BUF[12], PMS7003_RX_BUF[13], PMS7003_RX_BUF[14], PMS7003_RX_BUF[15], Conce_PM2_5, Conce_PM10);
 			pm_state = RECV_WAIT;
 		}
 		else
 		{
-			//DBG("PM2.5 pm_check_short is error!");
+			//printf("PM2.5 pm_check_short is error!\r\n");
 			return;
 		}
 	}

@@ -12,7 +12,7 @@
 #include "MyFifo.h"
 #include "aqi.h"
 //add for gprs
-#include "uart1.h"
+#include "uart.h"
 //#include "uart3.h"
 #include "interface.h"
 #include "serialportAPI.h"
@@ -73,9 +73,9 @@ int main()
 
 	RGB_Set(CUTDOWN, 4);	//关闭空气质量灯
 
-  UartBegin(115200, &USART1Conf, &U1_PutChar);				//串口1配置
-	USART2Conf(9600);      //串口2配置
-  USART3Conf(9600);		//串口3配置
+  UartBegin(115200, &GPRS_USART, &U1_PutChar);				//串口1配置
+	USART2Conf(9600, 0, 1);      //串口2配置
+  //USART3Conf(9600, 1, 1);		//串口3配置
 	//DSHCHO_Init(115200, &USART3Conf, &U3_PutChar);
   TIM2_Init();					//每1ms中断一次的定时器，用来记录时间
 #ifndef ACTIVE_BEEP
@@ -87,32 +87,17 @@ int main()
 	RTC_Init(2017, 1, 1, 0, 0, 0);						//实时时钟初始化，用来限制用户超过租期不能使用。
 	//Timer4_init();	//TIM+DMA方式控制空气质量灯
 
-	DBG("APP V1.0!!!!");
-	sprintf(DBG_BUF, "\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
-	DBG(DBG_BUF);
+	printf("APP V1.0!!!!\r\n");
+	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	beep_on(BEEP_TIME);
 	
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);
-	sprintf(DBG_BUF, "U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
-	DBG(DBG_BUF);
+	printf("U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x\r\n", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
 	
 	//往FLASH_FIRMWARE_FLAG地址写1表示APP程序正常运行
 	if(Flash_Read_Number(FLASH_FIRMWARE_FLAG) != 1) Flash_Write_Number(1, FLASH_FIRMWARE_FLAG);
 	
-	//给甲醛传感器发送命令接收返回数据
-//	Send_DSHCHO_Cmd();
-//	delay_ms(100);
-//	sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
-//	DBG(DBG_BUF);
-	
-//	while(1)
-//	{
-//		delay_ms(1000);
-//		Send_DSHCHO_Cmd();
-//		delay_ms(100);
-//		sprintf(DBG_BUF, "DSHCHO_RX_BUF = %x %x %x %x %x %x %x %x %x %x, Conce_HCHO = %f", DSHCHO_RX_BUF[0], DSHCHO_RX_BUF[1], DSHCHO_RX_BUF[2], DSHCHO_RX_BUF[3], DSHCHO_RX_BUF[4], DSHCHO_RX_BUF[5], DSHCHO_RX_BUF[6], DSHCHO_RX_BUF[7], DSHCHO_RX_BUF[8], DSHCHO_RX_BUF[9], Conce_HCHO);
-//		DBG(DBG_BUF);
-//	}
+
 
   while(1)
   {
@@ -145,6 +130,24 @@ int main()
         break;
     }
   }
+}
+
+void GPRS_USART(u32 baudRate)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_ResetBits(GPIOB, GPIO_Pin_0); //PB0上电低电平
+	
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;     //GPRS模块VBAT
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_SetBits(GPIOA, GPIO_Pin_1); //PA1上电低电平
+	
+	USART1Conf(baudRate, 0, 0);
 }
 
 void RCC_Configuration(void)
@@ -359,10 +362,10 @@ void restart_MCU(void)
 
 void Initial_GSM()
 {
-  DBG("test!\n");
+  printf("test!\r\n");
   while(0 == GSMInit(HOST_NAME, HOST_PORT, http_buf)) GSM_restart();
   //while(0 == HttpInit(http_buf));
-  //DBG(http_buf);
+  //printf("%s\r\n", http_buf);
   All_State = initialTCP;
 }
 
@@ -378,8 +381,7 @@ void Initial_MQTT()
   //for will message
   mqtt_data.willFlag = 1;
   sprintf(topic_group, "clients/%s/state", deviceID);
-  sprintf(DBG_BUF, "willtopic = %s", topic_group);
-  DBG(DBG_BUF);
+  printf("willtopic = %s\r\n", topic_group);
   mqtt_data.will.topicName.cstring = topic_group;
   mqtt_data.will.message.cstring = "0";
   mqtt_data.will.qos = 1;
@@ -390,28 +392,27 @@ void Initial_MQTT()
 
   mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
-	sprintf(DBG_BUF, "rc = %d", rc);
-	DBG(DBG_BUF);
+	printf("rc = %d\r\n", rc);
   if ( rc == CONNACK)   //这里把获取数据的指针传了进去！！！
   {
     unsigned char sessionPresent, connack_rc;
 
     if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqtt_buf, mqtt_buflen) != 1 || connack_rc != 0)
     {
-      DBG("MQTT CONNACK1 FAILED!");
+      printf("MQTT CONNACK1 FAILED!\r\n");
       restart_MCU();
 			return;
     }
     else
     {
       All_State = initialMQTT;
-      DBG("MQTT CONNACK OK!");
+      printf("MQTT CONNACK OK!\r\n");
     }
   }
   else
   {
     //failed ???
-    DBG("MQTT CONNACK2 FAILED!");
+    printf("MQTT CONNACK2 FAILED!\r\n");
     restart_MCU();
 		return;
   }
@@ -425,8 +426,7 @@ void MQTT_Sub0Pub1()
 
   //订阅主题
   sprintf(topic_group, "SHAir/%s/get", deviceID);
-  sprintf(DBG_BUF, "subtopic = %s", topic_group);
-  DBG(DBG_BUF);
+  printf("subtopic = %s\r\n", topic_group);
   topicString.cstring = topic_group;
   len = MQTTSerialize_subscribe(mqtt_buf, mqtt_buflen, 0, msgid, 1, &topicString, &req_qos);
   //所有这些都不是直接发送，而是通过先获取buffer，我们再手动发送出去
@@ -444,18 +444,18 @@ void MQTT_Sub0Pub1()
     if (granted_qos != 0)
     {
       //wrong
-      DBG("MQTT SUBACK1 FAILED!");
+      printf("MQTT SUBACK1 FAILED!\r\n");
       restart_MCU();
 			return;
     }
     else
     {
-      DBG("MQTT SUBACK OK!");
+      printf("MQTT SUBACK OK!\r\n");
     }
   }
   else
   {
-    DBG("MQTT SUBACK2 FAILED!");
+    printf("MQTT SUBACK2 FAILED!\r\n");
     restart_MCU();
 		return;
   }
@@ -473,12 +473,11 @@ void MQTT_Sub0Pub1()
     unsigned char* payload_in;
     MQTTString receivedTopic;
 
-		DBG("recive retain publish");
+		printf("recive retain publish\r\n");
     rc = MQTTDeserialize_publish(&dup, &qos, &retained, &msgid, &receivedTopic,
                                  &payload_in, &payloadlen_in, mqtt_buf, mqtt_buflen);
     //handle "payload_in" as data from the server
-		sprintf(DBG_BUF, "retained = %d, msgid = %d, receivedTopic = %s", retained, msgid, receivedTopic.cstring);
-		DBG(DBG_BUF);
+		printf("retained = %d, msgid = %d, receivedTopic = %s", retained, msgid, receivedTopic.cstring);
 
     recv_mqtt(payload_in, payloadlen_in, payload, &payloadlen);
   }
@@ -486,17 +485,16 @@ void MQTT_Sub0Pub1()
   //发布开机提示
   if(!Public_Open(5))
   {
-    DBG("PUBLIC OPEN ERROR");
+    printf("PUBLIC OPEN ERROR");
     restart_MCU();
 		return;
   }
-  DBG("PUBLIC OPEN OK!");
+  printf("PUBLIC OPEN OK!\r\n");
 	All_State = sendPM;
 
   //发布主题
   sprintf(topic_group, "SHAir/%s/update", deviceID);
-  sprintf(DBG_BUF, "pubtopic = %s", topic_group);
-  DBG(DBG_BUF);
+  printf("pubtopic = %s", topic_group);
   topicString.cstring = topic_group;
 	//连接上网络的声音
 	beep_on(BEEP_TIME);
@@ -526,8 +524,7 @@ int Public_Open(int time)
   for(i = 0; i < time; i++)
   {
     sprintf(topic_group, "clients/%s/state", deviceID);
-    sprintf(DBG_BUF, "opentopic = %s", topic_group);
-    DBG(DBG_BUF);
+    printf("opentopic = %s\r\n", topic_group);
     topicString.cstring = topic_group;
     sprintf(payload, "1");
     //strcpy(payload, http_buf);
@@ -537,8 +534,7 @@ int Public_Open(int time)
 
     mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
     rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
-    sprintf(DBG_BUF, "PUBLIC OPEN rc = %d", rc);
-    DBG(DBG_BUF);
+    printf("PUBLIC OPEN rc = %d\r\n", rc);
     if(rc == PUBACK) return 1;
 		else dup = 1;	//如果 DUP 标志被设置为 1，表示这可能是一个早前报文请求的重发。
   }
@@ -552,7 +548,7 @@ void Transmission_State()
 	if(wait_send_press == 1)
 	{
 		wait_send_press = 0;
-		DBG("send press!");
+		printf("send press!\r\n");
 		SendJson(PRESS_MODE);
 	}
 	
@@ -562,7 +558,7 @@ void Transmission_State()
 		ping_flag = 0;
 		if(!SendPingPack(5))
 		{
-			DBG("pingpack is FAILED!");
+			printf("pingpack is FAILED!\r\n");
 			//记录断网时间
 			break_time = RTC_GetCounter();
 			gprs_break_time[gprs_break_cnt] = UNIXtime2date(break_time);
@@ -681,8 +677,7 @@ void SendJson(u8 mode)
 	len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
 	sim800C_send(mqtt_buf, len);
 	
-	sprintf(DBG_BUF, "mode = %d, SendJson len = %d", mode, len);
-	DBG(DBG_BUF);
+	printf("mode = %d, SendJson len = %d\r\n", mode, len);
 }
 
 int SendPingPack(int times)
@@ -698,14 +693,12 @@ int SendPingPack(int times)
 		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
 		{
-			sprintf(DBG_BUF, "rc = %d, pingreq is successful!", rc);
-			DBG(DBG_BUF);
+			printf("rc = %d, pingreq is successful!\r\n", rc);
 			return 1;
 		}
 		else
 		{
-			sprintf(DBG_BUF, "rc = %d, pingreq is failed!", rc);
-			DBG(DBG_BUF);
+			printf("rc = %d, pingreq is failed!\r\n", rc);
 		}
 	}
 	return 0;
@@ -731,51 +724,49 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 	//for debug
 	u32 test_flag = 0;
 
-  sprintf(DBG_BUF, "MQTT recive data: %s, data_len: %d", recv_data, data_len);
-  DBG(DBG_BUF);
+  printf("MQTT recive data: %s, data_len: %d\r\n", recv_data, data_len);
 
   mqtt_recv_root = cJSON_Parse((const char *)recv_data);
   if(mqtt_recv_root != NULL)
   {
-    DBG("mqtt_recv_root is ok!");
+    printf("mqtt_recv_root is ok!\r\n");
 		
 		//处expiresAt据
 		if(cJSON_GetObjectItem(mqtt_recv_root, "expiresAt") != NULL)
     {
-			DBG("expiresAt is OK");
+			printf("expiresAt is OK\r\n");
 			if(cJSON_IsNumber(cJSON_GetObjectItem(mqtt_recv_root, "expiresAt")))
 			{
-				DBG("expiresAt is Number");
+				printf("expiresAt is Number\r\n");
 				//用时间戳的数据格式
 				timeout_count = cJSON_GetObjectItem(mqtt_recv_root, "expiresAt")->valueint;
 				if(timeout_count > 1502883485 && timeout_count < 2147483647)
 				{
-					sprintf(DBG_BUF, "expiresAt = %d", timeout_count);
-					DBG(DBG_BUF);
+					printf("expiresAt = %d\r\n", timeout_count);
 					Flash_Write_Number(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
 					Flash_Write_Number(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
 				}
-				else DBG("expiresAt number is Error");
+				else printf("expiresAt number is Error\r\n");
 			}
-			else DBG("expiresAt not Number");
+			else printf("expiresAt not Number\r\n");
     }
 		
 		//处childLock据
 		if(cJSON_GetObjectItem(mqtt_recv_root, "childLock") != NULL)
     {
 			if(All_State == sendPM) beep_on(BEEP_TIME);
-			DBG("childLock is OK");
+			printf("childLock is OK\r\n");
 			if(cJSON_IsTrue(cJSON_GetObjectItem(mqtt_recv_root, "childLock")))
 			{
-				DBG("childLock is true");
+				printf("childLock is true\r\n");
 				s_Powerkey.ChildLock_flag = 1;
 			}
 			else if(cJSON_IsFalse(cJSON_GetObjectItem(mqtt_recv_root, "childLock")))
 			{
-				DBG("childLock is false");
+				printf("childLock is false\r\n");
 				s_Powerkey.ChildLock_flag = 0;
 			}
-			else	DBG("childLock ERROR!!!");
+			else	printf("childLock ERROR!!!\r\n");
     }
 
     //处理power指令，收到power on开启自动模式，收到power off关闭风机，收到其他信息也关闭风机
@@ -783,25 +774,21 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
     {			
       power_tmp = cJSON_GetObjectItem(mqtt_recv_root, "power")->valuestring;
       strcpy(power_state, power_tmp);
-      sprintf(DBG_BUF, "recive power is %s, power_state is %s", power_tmp, power_state);
-      DBG(DBG_BUF);
+      sprintf("recive power is %s, power_state is %s\r\n", power_tmp, power_state);
       if(!strcmp(power_state, "on"))
       {
         strcpy(mqtt_mode, "A");
-        sprintf(DBG_BUF, "power on, mqtt_mode = %s", mqtt_mode);
-        DBG(DBG_BUF);
+        printf("power on, mqtt_mode = %s\r\n", mqtt_mode);
       }
       else if(!strcmp(power_state, "off"))
       {
         strcpy(mqtt_mode, "0");
-        sprintf(DBG_BUF, "power off, mqtt_mode = %s", mqtt_mode);
-        DBG(DBG_BUF);
+        printf("power off, mqtt_mode = %s\r\n", mqtt_mode);
       }
       else
       {
         strcpy(mqtt_mode, "0");
-        sprintf(DBG_BUF, "power messge is error, mqtt_mode = %s", mqtt_mode);
-        DBG(DBG_BUF);
+        printf("power messge is error, mqtt_mode = %s\r\n", mqtt_mode);
       }
 			ModeCountrol();
     }
@@ -811,8 +798,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
     {
       mode_tmp = cJSON_GetObjectItem(mqtt_recv_root, "mode")->valuestring;
       strcpy(mqtt_mode, mode_tmp);
-      sprintf(DBG_BUF, "mode_tmp = %s, mqtt_mode = %s", mode_tmp, mqtt_mode);
-      DBG(DBG_BUF);
+      printf("mode_tmp = %s, mqtt_mode = %s\r\n", mode_tmp, mqtt_mode);
 			ModeCountrol();
     }
 		
@@ -821,8 +807,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
     {
 			char * fan_test;
       fan_test = cJSON_GetObjectItem(mqtt_recv_root, "fan_test")->valuestring;
-      sprintf(DBG_BUF, "fan_test = %s", fan_test);
-      DBG(DBG_BUF);
+      printf("fan_test = %s\r\n", fan_test);
 			FanTest(fan_test);
     }
 		
@@ -865,8 +850,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 						ftp_passwd = cJSON_GetObjectItem(firmware_obj, "passwd")->valuestring;
 						ftp_filename = cJSON_GetObjectItem(firmware_obj, "filename")->valuestring;
 						ftp_path = cJSON_GetObjectItem(firmware_obj, "path")->valuestring;
-						sprintf(DBG_BUF, "strlen = %d, %d, %d, %d, %d\r\n", strlen(ftp_server), strlen(ftp_username), strlen(ftp_passwd), strlen(ftp_filename), strlen(ftp_path));
-						DBG(DBG_BUF);
+						printf("strlen = %d, %d, %d, %d, %d\r\n", strlen(ftp_server), strlen(ftp_username), strlen(ftp_passwd), strlen(ftp_filename), strlen(ftp_path));
 						if(strlen(ftp_server)<32&&strlen(ftp_username)<32&&strlen(ftp_passwd)<32&&strlen(ftp_filename)<32&&strlen(ftp_path)<32)
 						{
 							Flash_Write_Str(FLASH_FTP_SERVER, (u8 *)ftp_server, FTP_PARAM_SIZE);
@@ -877,41 +861,37 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 												
 							Flash_Write_Number(0, FLASH_FIRMWARE_FLAG);	//写0表示要更新固件
 							test_flag = Flash_Read_Number(FLASH_FIRMWARE_FLAG);
-							sprintf(DBG_BUF, "test_flag = %d", test_flag);
-							DBG(DBG_BUF);
+							printf("test_flag = %d\r\n", test_flag);
 							//重启
 							__disable_fault_irq();   
 							NVIC_SystemReset();
 							while(1);
 						}
-						else DBG("parame size >= 32!");
+						else printf("parame size >= 32!\r\n");
 					}
-					else DBG("parame is error!");
+					else printf("parame is error!\r\n");
 				}
-				else DBG("cmd != update");
+				else printf("cmd != update\r\n");
 			}
-			else DBG("cJSON_GetObjectItem(firmware_obj, \"cmd\") == NULL");
+			else printf("cJSON_GetObjectItem(firmware_obj, \"cmd\") == NULL\r\n");
 
     }
-		else	DBG("firmware_obj == NULL");
 		
 		//将收到的JSON数据立即返回，类似回应消息
 		out = cJSON_Print(mqtt_recv_root);			
 		strcpy(return_data, out);
-
-		DBG(DBG_BUF);		
 		
 		//必须释放out的空间，否则会溢出
 		free(out);
   }
 	else
 	{
-		DBG("mqtt_recv_root is NULL!");
+		printf("mqtt_recv_root is NULL!\r\n");
 		strcpy(return_data, "recive data is error!");
 	}
 	
 	*return_len = strlen(payload);
-	sprintf(DBG_BUF, "return_data = %s， return_len = %d", return_data, *return_len);
+	printf("return_data = %s， return_len = %d\r\n", return_data, *return_len);
 
   //必须释放json的空间，否则会溢出
   cJSON_Delete(mqtt_recv_root);
@@ -937,10 +917,9 @@ void FanTest(char * fan_test)
 		case 'd': fan_tmp = 0xd; break;
 		case 'e': fan_tmp = 0xe; break;
 		case 'f': fan_tmp = 0xf; break;
-		default: fan_tmp = 0x0; DBG("fan_test is error!");
+		default: fan_tmp = 0x0; printf("fan_test is error!\r\n");
 	}
-	sprintf(DBG_BUF, "fan_tmp = %d, fan_test = %s", fan_tmp, fan_test);
-	DBG(DBG_BUF);
+	printf("fan_tmp = %d, fan_test = %s\r\n", fan_tmp, fan_test);
 	SetMotorLevel(fan_tmp);
 	LedCountrol(fan_tmp);
 }
@@ -963,7 +942,7 @@ void ModeCountrol(void)
       else
       {
         fan_level = 0;
-        DBG("Conce_PM2_5 is error");
+        printf("Conce_PM2_5 is error\r\n");
       }
 
       MotorCountrol(fan_level);
@@ -1028,23 +1007,23 @@ void MotorCountrol(unsigned char level)
   {
     case 1:
       SetMotorLevel(MOTORSPEED1);
-      DBG("Set Motor speed is 1");
+      printf("Set Motor speed is 1\r\n");
       break;
     case 2:
       SetMotorLevel(MOTORSPEED2);
-      DBG("Set Motor speed is 2");
+      printf("Set Motor speed is 2\r\n");
       break;
     case 3:
       SetMotorLevel(MOTORSPEED3);
-      DBG("Set Motor speed is 3");
+      printf("Set Motor speed is 3\r\n");
       break;
     case 4:
       SetMotorLevel(MOTORSPEED4);
-      DBG("Set Motor speed is 4");
+      printf("Set Motor speed is 4\r\n");
       break;
     default:
       SetMotorLevel(MOTORSPEED0);
-      DBG("Set Motor is power down");
+      printf("Set Motor is power down\r\n");
   }
 }
 
@@ -1057,7 +1036,7 @@ void auto_mode(unsigned char *level)
       {
         (*level)++;
         MotorCountrol(*level);
-        DBG("Auto Motor speed is 2");
+        printf("Auto Motor speed is 2\r\n");
       }
       break;
     case 2:
@@ -1065,13 +1044,13 @@ void auto_mode(unsigned char *level)
       {
         (*level)++;
         MotorCountrol(*level);
-        DBG("Auto Motor speed is 3");
+        printf("Auto Motor speed is 3\r\n");
       }
       else if(AQI_Max < PM2_5_LEVEL1 - LEVEL_OFFSET)
       {
         (*level)--;
         MotorCountrol(*level);
-        DBG("Auto Motor speed is 1");
+        printf("Auto Motor speed is 1\r\n");
       }
       break;
     case 3:
@@ -1079,7 +1058,7 @@ void auto_mode(unsigned char *level)
       {
         (*level)--;
         MotorCountrol(*level);
-        DBG("Auto Motor speed is 2");
+        printf("Auto Motor speed is 2\r\n");
       }
       break;
   }
@@ -1095,30 +1074,30 @@ void AirLEDControl(void)
 	if(*mqtt_mode == '0' || *mqtt_mode == '1')
 	{
 		RGB_Set(CUTDOWN, 4);
-		//DBG("sleep mode close the airled!");
+		//printf("sleep mode close the airled!\r\n");
 	}
 	else if(AQI_Max <= PM2_5_LEVEL1)
 	{
 		//WS2812_send(colors[4], 4);
 		RGB_Set(GREEN, 4);
-		//DBG("GREEN");
+		//printf("GREEN\r\n");
 	}
 	else if(AQI_Max > PM2_5_LEVEL1 && AQI_Max <= PM2_5_LEVEL2)
 	{
 		//WS2812_send(colors[1], 4);
 		RGB_Set(ORANGE, 4);
-		//DBG("ORANGE");
+		//printf("ORANGE\r\n");
 	}
 	else if(AQI_Max > PM2_5_LEVEL2)
 	{
 		//WS2812_send(colors[0], 4);
 		RGB_Set(RED, 4);
-		//DBG("RED");
+		//printf("RED\r\n");
 	}
 	else
 	{
 		RGB_Set(WHITE, 4);
-		DBG("airled control is error!");
+		printf("airled control is error!\r\n");
 	}
 }
 
