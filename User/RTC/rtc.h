@@ -5,6 +5,7 @@
 //正点原子@ALIENTEK
 //2010/6/6
 
+//如果想使用外置电池来实现断电依旧有效的RTC功能，必须使用RCC_LSE宏
 //#define RCC_LSE
 //#define RCC_LSI
 #define RCC_HSE

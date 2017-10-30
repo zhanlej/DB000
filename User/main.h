@@ -2,6 +2,9 @@
 
 //#define SWIO_DEBUG
 
+//开盖检测引脚，后盖打开后要：失能物理按键；关闭所有灯；关闭风机；
+#define OPEN_COVER PBin(11)
+
 //ALL_Status
 #define initialWAITOK -1
 #define initialTCP -2

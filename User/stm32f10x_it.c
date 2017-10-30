@@ -44,6 +44,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern unsigned char opencover_flag; //extern from main.c
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -171,21 +172,23 @@ void TIM2_IRQHandler(void)
     timer1msINT();
 		
 		//add for 物理按键
-		if(sys_tick % 10 == 0 && !s_Powerkey.timeout_flag && !s_Powerkey.ChildLock_flag)	//每10ms检查一次
+		if(sys_tick % 10 == 0 && !s_Powerkey.timeout_flag && !s_Powerkey.ChildLock_flag && !opencover_flag)	//每10ms检查一次
 		{
 			Pannelkey_Polling();
 		}
 		
-//		//add for 物理按键
-//		if((sys_tick >= press_time+2000) && (press_flag == 1))
+//		//判断是否打开后盖，如果打开后盖将flag=1，该flag能够失能物理按键和命令接收，然后设置为关机模式
+//		if(OPEN_COVER == 0 && opencover_flag == 0)
 //		{
-//			EXTI_DeInit();	//为了解决下面的操作对物理按键干扰而触发中断函数
-//			press_flag = 0;
-//			printf("LONG PRESS\r\n");
+//			printf("The cover was opened!\r\n");
+//			opencover_flag = 1;
 //			strcpy(mqtt_mode, "0");
 //			ModeCountrol();
-//			SavePressLog();
-//			EXTIX_Init();		//为了解决上面的操作对物理按键干扰而触发中断函数
+//		}
+//		else if(OPEN_COVER == 1 && opencover_flag == 1)
+//		{
+//			printf("The cover was closed!\r\n");
+//			opencover_flag = 0;
 //		}
   }
 }

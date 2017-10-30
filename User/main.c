@@ -60,6 +60,7 @@ unsigned char send_flag = 0;
 unsigned char ping_flag = 0;
 unsigned char auto_flag = 0;
 unsigned char internal_flag = 0;
+unsigned char opencover_flag = 0; //是否打开后盖的全局标志
 
 int main()
 {
@@ -75,7 +76,7 @@ int main()
 
   UartBegin(115200, &GPRS_USART, &U1_PutChar);				//串口1配置
 	USART2Conf(9600, 0, 1);      //串口2配置
-  //USART3Conf(9600, 1, 1);		//串口3配置
+  USART3Conf(9600, 1, 1);		//串口3配置
 	//DSHCHO_Init(115200, &USART3Conf, &U3_PutChar);
   TIM2_Init();					//每1ms中断一次的定时器，用来记录时间
 #ifndef ACTIVE_BEEP
@@ -101,7 +102,7 @@ int main()
 
   while(1)
   {
-	if(auto_flag == 1)
+		if(auto_flag == 1)
 		{
 			if(*mqtt_mode == 'A')
 			{
@@ -213,15 +214,10 @@ void GPIO_Configuration(void)
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 	GPIO_ResetBits(GPIOB, GPIO_Pin_12);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;     //蜂鸣器
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_13);
-
-//  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;     //物理按键
-//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
+//  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;     //蜂鸣器
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
 //  GPIO_Init(GPIOB, &GPIO_InitStructure);
-//  //GPIO_SetBits(GPIOB, GPIO_Pin_14);
+//  GPIO_SetBits(GPIOB, GPIO_Pin_13);
 
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //A0
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
