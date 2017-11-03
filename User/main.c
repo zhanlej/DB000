@@ -770,7 +770,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
     {			
       power_tmp = cJSON_GetObjectItem(mqtt_recv_root, "power")->valuestring;
       strcpy(power_state, power_tmp);
-      sprintf("recive power is %s, power_state is %s\r\n", power_tmp, power_state);
+      printf("recive power is %s, power_state is %s\r\n", power_tmp, power_state);
       if(!strcmp(power_state, "on"))
       {
         strcpy(mqtt_mode, "A");

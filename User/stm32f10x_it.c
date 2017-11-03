@@ -177,19 +177,19 @@ void TIM2_IRQHandler(void)
 			Pannelkey_Polling();
 		}
 		
-//		//判断是否打开后盖，如果打开后盖将flag=1，该flag能够失能物理按键和命令接收，然后设置为关机模式
-//		if(OPEN_COVER == 0 && opencover_flag == 0)
-//		{
-//			printf("The cover was opened!\r\n");
-//			opencover_flag = 1;
-//			strcpy(mqtt_mode, "0");
-//			ModeCountrol();
-//		}
-//		else if(OPEN_COVER == 1 && opencover_flag == 1)
-//		{
-//			printf("The cover was closed!\r\n");
-//			opencover_flag = 0;
-//		}
+		//判断是否打开后盖，如果打开后盖将flag=1，该flag能够失能物理按键和命令接收，然后设置为关机模式
+		if(OPEN_COVER == 1 && opencover_flag == 0)
+		{
+			printf("The cover was opened!\r\n");
+			opencover_flag = 1;
+			strcpy(mqtt_mode, "0");
+			ModeCountrol();
+		}
+		else if(OPEN_COVER == 0 && opencover_flag == 1)
+		{
+			printf("The cover was closed!\r\n");
+			opencover_flag = 0;
+		}
   }
 }
 

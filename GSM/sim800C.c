@@ -169,6 +169,14 @@ int GSMInit(const char *addr, uint32_t port, char *http_data)
 	
 	//if(!sATIPR(115200)) goto RESTART; //ÉèÖÃ²¨ÌØÂÊ
 	if(!ConectTest())	return 0;
+#ifdef RF_TEST
+	delay(5000);
+//	if(!sATD(112)) return 0;
+//	printf("sATD(112) is OK\r\n");
+	if(!sATS0(1)) return 0;
+	printf("sATS0(1) is OK!\r\n");
+	while(1);
+#endif
 	if(!CheckState()) return 0;
 	//if(!FSInit()) return 0;
 	if(!LSB_API_data()) return 0;
@@ -242,15 +250,6 @@ int CheckState(void)
 	}
 	if(i >= 30) return 0;
 	printf("CGATT = 1!\r\n");
-	
-#ifdef RF_TEST
-	delay(5000);
-//	if(!sATD(112)) return 0;
-//	printf("sATD(112) is OK\r\n");
-	if(!sATS0(1)) return 0;
-	printf("sATS0(1) is OK!\r\n");
-	while(1);
-#endif
 	
 #ifdef TRANS_MODE
 	if(!sATCIPMODE(1)) return 0;
@@ -419,7 +418,7 @@ int SimNTP_get(void)
 	printf("NTP 4 OK\r\n");
 	RTC_Get();
 	printf("current RTC: %d/%d/%d %d:%d:%d\r\n", calendar.w_year,calendar.w_month,calendar.w_date,calendar.hour,calendar.min,calendar.sec);
-	if(calendar_tmp.w_year!=calendar.w_year || calendar_tmp.w_month!=calendar.w_month || calendar_tmp.w_date!=calendar.w_date || calendar_tmp.hour!=calendar.hour || calendar_tmp.min!=calendar.min)
+	if(calendar_tmp.w_year!=calendar.w_year || calendar_tmp.w_month!=calendar.w_month || calendar_tmp.w_date!=calendar.w_date || calendar_tmp.hour!=calendar.hour || ((calendar_tmp.min-(calendar.min+1)%60) > 1) || ((calendar.min-(calendar_tmp.min+1)%60) > 1))
 	{
 		printf("calendar_tmp != calendar, RTC need to update!\r\n");
 		RTC_Set(calendar_tmp.w_year,calendar_tmp.w_month,calendar_tmp.w_date,calendar_tmp.hour,calendar_tmp.min,calendar_tmp.sec);
