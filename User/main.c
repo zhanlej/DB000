@@ -83,14 +83,16 @@ int main()
 	TIM1_Int_Init();			//打开定时器TIM1，产生无源蜂鸣器的PWM
 #endif
 	TIM3_Int_Init(9999, 7199);	//打开定时器，指定时间发送传感器数据到服务器
+	beep_init();						//蜂鸣器初始化
 	//EXTIX_Init();					//物理按键外部中断初始化
 	Panakey_Init();					//物理按键外部中断初始化
 	RTC_Init(2017, 1, 1, 0, 0, 0);						//实时时钟初始化，用来限制用户超过租期不能使用。
 	//Timer4_init();	//TIM+DMA方式控制空气质量灯
 
+	delay_ms(1000);
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
-	beep_on(BEEP_TIME);
+	beep_on(BEEP_ON);
 	
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);
 	printf("U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x\r\n", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
@@ -493,9 +495,9 @@ void MQTT_Sub0Pub1()
   printf("pubtopic = %s", topic_group);
   topicString.cstring = topic_group;
 	//连接上网络的声音
-	beep_on(BEEP_TIME);
-	delay(100);
-	beep_on(BEEP_TIME);
+	beep_on(BEEP_CONNECT);
+//	delay(100);
+//	beep_on(BEEP_TIME);
 	//记录连接时间
 	if(gprs_connect_cnt == 0)
 		gprs_connect_time[gprs_connect_cnt] = UNIXtime2date(RTC_GetCounter());
@@ -750,7 +752,7 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 		//处childLock据
 		if(cJSON_GetObjectItem(mqtt_recv_root, "childLock") != NULL)
     {
-			if(All_State == sendPM) beep_on(BEEP_TIME);
+			if(All_State == sendPM) beep_on(BEEP_CMD);
 			printf("childLock is OK\r\n");
 			if(cJSON_IsTrue(cJSON_GetObjectItem(mqtt_recv_root, "childLock")))
 			{
@@ -980,7 +982,10 @@ void ModeCountrol(void)
 
 void LedCountrol(unsigned short mode)
 {
-	beep_on(BEEP_TIME);
+	if(*mqtt_mode == '0')
+		beep_on(BEEP_OFF);
+	else
+		beep_on(BEEP_CMD);
 	
 	AUTO_LED = (~(mode >> 0) & 1);
 	SLEEP_LED = (~(mode >> 1) & 1);

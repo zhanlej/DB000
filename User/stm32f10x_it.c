@@ -35,6 +35,7 @@
 #include "rtc.h"
 //#include "DSHCHO.h"
 #include "PMS7003.h"
+#include "buzzer.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -189,6 +190,11 @@ void TIM2_IRQHandler(void)
 		{
 			printf("The cover was closed!\r\n");
 			opencover_flag = 0;
+		}
+		
+		if(beep_play.beep_status != BEEP_STATUS_STOP)
+		{
+			beep_handle(sys_tick);
 		}
   }
 }
