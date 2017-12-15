@@ -110,7 +110,7 @@ int main()
 			{
 				auto_mode((unsigned char *)&fan_level);
 			}
-			AirLEDControl();
+			
 			auto_flag = 0;
 		}
 		
@@ -633,6 +633,7 @@ void TIM3_IRQHandler(void)   //TIM3中断
 		if(tim3_cnt % AUTOMODE_INTERVAL == 0)
 		{
 			auto_flag = 1;
+			AirLEDControl();
 		}
 		
 //		if((tim3_cnt+1) % COUNT_INTERVAL == 0)	//要提前1S发送甲醛传感器的命令
