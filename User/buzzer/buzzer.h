@@ -38,7 +38,10 @@ typedef enum
 	F2_3 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/23,		/* 1000/2.3 */
 	F2_6 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/26,		/* 1000/2.6 */
 	F2_9 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/29,		/* 1000/2.9 */
-	F4 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/40			/* 1000/4 */
+	F4 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/40,			/* 1000/4 */
+	F4_4 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/44,			/* 1000/4 */
+	F3_7 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/37,			/* 1000/4 */
+	F3_4 = SYSTEM_CLK/BEEP_TIMER_PERIOD/100/34			/* 1000/4 */
 } freq_enum;
 
 typedef struct _note_
@@ -53,7 +56,7 @@ typedef struct _beep_play_
 	beep_status_enum beep_status;				/* 通知定时器中断服务函数 */
 	beep_tpye_enum type;	/* 蜂鸣器发音的类型 */
 	u8 note_num;					/* 播放音符的数量 */
-	note_t note[3];				/* 播放音符的数组 */
+	note_t note[4];				/* 播放音符的数组 */
 } beep_play_t;
 
 /* #####   EXPORTED DATA TYPES   #################################################### */

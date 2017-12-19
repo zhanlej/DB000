@@ -98,7 +98,7 @@ void beep_init(void)
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	BUZZER_PIN_F = 0;
-	BUZZER_PIN_V = 0;
+	BUZZER_PIN_V = 1;
 	
 	beep_play.beep_status = BEEP_STATUS_STOP;
 }
@@ -113,16 +113,19 @@ void beep_on(beep_tpye_enum beep_type)
 	switch(beep_type)
 	{
 		case BEEP_ON:
-			beep_play.note_num = 3;
-			beep_play.note[0].freq = F2_3;
-			beep_play.note[0].Tv = 200;
-			beep_play.note[0].Tf = 300;
-			beep_play.note[1].freq = F2_6;
-			beep_play.note[1].Tv = 200;
-			beep_play.note[1].Tf = 300;
-			beep_play.note[2].freq = F2_9;
-			beep_play.note[2].Tv = 200;
-			beep_play.note[2].Tf = 300;
+			beep_play.note_num = 4;
+			beep_play.note[0].freq = F4_4;
+			beep_play.note[0].Tv = 40;
+			beep_play.note[0].Tf = 230;
+			beep_play.note[1].freq = F4;
+			beep_play.note[1].Tv = 40;
+			beep_play.note[1].Tf = 230;
+			beep_play.note[2].freq = F3_7;
+			beep_play.note[2].Tv = 40;
+			beep_play.note[2].Tf = 230;
+			beep_play.note[3].freq = F3_4;
+			beep_play.note[3].Tv = 40;
+			beep_play.note[3].Tf = 3600;
 			break;
 		case BEEP_OFF:
 			beep_play.note_num = 3;
@@ -163,8 +166,9 @@ void beep_handle(unsigned long current_tick)
 	{
 		beep_start_tick = current_tick;
 		beep_note_id = 0;
-		BUZZER_PIN_V = 1; //打开蜂鸣器供电端
+		BUZZER_PIN_V = 0; //打开蜂鸣器供电端
 		TIM_PrescalerConfig(TIM1, beep_play.note[beep_note_id].freq, TIM_PSCReloadMode_Update); //设置蜂鸣器振荡信号输入端PWM的频率
+		TIM1->CCR1 = BEEP_TIMER_PWM_PLUSE; //设置TIM1 channel1的PWM占空比
 		TIM_CtrlPWMOutputs(TIM1, ENABLE);	//打开蜂鸣器振荡信号输入端PWM
 		beep_play.beep_status = BEEP_STATUS_KEEP;
 	}
@@ -178,7 +182,7 @@ void beep_handle(unsigned long current_tick)
 		{
 			if(current_tick == beep_start_tick+beep_play.note[beep_note_id].Tv)
 			{
-				BUZZER_PIN_V = 0; //关闭蜂鸣器供电端
+				BUZZER_PIN_V = 1; //关闭蜂鸣器供电端
 			}
 			else if(current_tick >= beep_start_tick+beep_play.note[beep_note_id].Tf)
 			{
@@ -186,15 +190,20 @@ void beep_handle(unsigned long current_tick)
 				if(beep_note_id+1 > beep_play.note_num) //beep_note_id加一并判断是否还有音符需要播放
 				{
 					beep_play.beep_status = BEEP_STATUS_STOP;
-					BUZZER_PIN_V = 0; //关闭蜂鸣器供电端
+					BUZZER_PIN_V = 1; //关闭蜂鸣器供电端
 					TIM_CtrlPWMOutputs(TIM1, DISABLE);	//关闭蜂鸣器振荡信号输入端PWM
 				}
 				else
 				{
 					beep_start_tick = current_tick;
-					BUZZER_PIN_V = 1; //打开蜂鸣器供电端
+					BUZZER_PIN_V = 0; //打开蜂鸣器供电端
 					TIM_PrescalerConfig(TIM1, beep_play.note[beep_note_id].freq, TIM_PSCReloadMode_Update); //设置蜂鸣器振荡信号输入端PWM的频率
+					TIM1->CCR1 = BEEP_TIMER_PWM_PLUSE; //设置TIM1 channel1的PWM占空比
 				}
+			}
+			else if(current_tick % 10 == 0)
+			{
+				if(TIM1->CCR1 > 0) TIM1->CCR1 -= 1;	//修改TIM1 channel1的PWM占空比
 			}
 		}
 	}
