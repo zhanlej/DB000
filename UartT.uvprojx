@@ -272,7 +272,7 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8005000</StartAddress>
+                <StartAddress>0x8000000</StartAddress>
                 <Size>0xac00</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
@@ -333,7 +333,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,DEBUG_ENABLE_SEMIHOST</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,DEBUG_ENABLE_SEMIHOST,TRANS_WIFI</Define>
               <Undefine></Undefine>
               <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer;.\User\DSHCHO;.\User\PMS7003</IncludePath>
             </VariousControls>
@@ -600,9 +600,9 @@
               <FilePath>.\GSM\stringAPIext.c</FilePath>
             </File>
             <File>
-              <FileName>sim800C.c</FileName>
+              <FileName>ESP8266.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\GSM\sim800C.c</FilePath>
+              <FilePath>.\GSM\ESP8266.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -11,13 +11,17 @@
 #include "MQTTPacket.h"  
 #include "MyFifo.h"
 #include "aqi.h"
-//add for gprs
+//add for transmission
 #include "uart.h"
 //#include "uart3.h"
 #include "interface.h"
 #include "serialportAPI.h"
+#ifdef TRANS_GPRS
 #include "sim800C.h"
-//add for gprs
+#elif TRANS_WIFI
+#include "ESP8266.h"
+#endif
+//add for transmission
 #include "cJSON.h"
 #include "myJSON.h"
 //add for 物理按键
@@ -35,6 +39,12 @@
 //add for PM2.5传感器
 #include "PMS7003.h"
 
+//指针函数定义
+void (*trans_module_restart)(void);
+int (*trans_module_init)(const char *addr, uint32_t port, char *http_data);
+int (*trans_module_send)(const uint8_t *buffer, uint32_t len);
+int (*trans_module_recv)(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
+
 u16 U_ID[6];
 char USART2_RX_BUF[10];
 char power_state[4];
@@ -47,7 +57,7 @@ volatile unsigned char fan_level = 0; //自动模式下的速度档位
 short All_State = initialWAITOK;
 char http_buf[512];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
-char deviceID[20] = "200035";
+char deviceID[20] = "200025";
 MQTTString topicString = MQTTString_initializer;
 unsigned char mqtt_buf[MQTT_SEND_SIZE];   
 int mqtt_buflen = sizeof(mqtt_buf); 
@@ -74,7 +84,7 @@ int main()
 
 	RGB_Set(CUTDOWN, 4);	//关闭空气质量灯
 
-  UartBegin(115200, &GPRS_USART, &U1_PutChar);				//串口1配置
+  UartBegin(115200, &TRANS_USART, &U1_PutChar);				//串口1配置
 	USART2Conf(9600, 0, 1);      //串口2配置
   USART3Conf(9600, 1, 1);		//串口3配置
 	//DSHCHO_Init(115200, &USART3Conf, &U3_PutChar);
@@ -117,7 +127,7 @@ int main()
     switch (All_State)
     {
       case initialWAITOK:
-        Initial_GSM();
+        Initial_trans_module();
         break;
       case initialTCP:
         Initial_MQTT();
@@ -135,7 +145,7 @@ int main()
   }
 }
 
-void GPRS_USART(u32 baudRate)
+void TRANS_USART(u32 baudRate)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -151,6 +161,18 @@ void GPRS_USART(u32 baudRate)
   GPIO_SetBits(GPIOA, GPIO_Pin_1); //PA1上电低电平
 	
 	USART1Conf(baudRate, 0, 0);
+	
+#ifdef TRANS_GPRS	
+  trans_module_init = GSMInit;
+	trans_module_restart = GSM_restart;
+	trans_module_send = sim800C_send;
+	trans_module_recv = sim800C_recv; //sim800C_recv内实现了将数据存入fifo3的功能
+#elif TRANS_WIFI
+	trans_module_init = WifiInit;
+	trans_module_restart = WIFI_restart;
+	trans_module_send = esp8266_send;
+	trans_module_recv = esp8266_recv;
+#endif
 }
 
 void RCC_Configuration(void)
@@ -353,17 +375,17 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 
 void restart_MCU(void)
 {
-  GSM_restart();
+  trans_module_restart();
 	All_State = initialWAITOK;
 	return;
 }
 
-void Initial_GSM()
+void Initial_trans_module()
 {
   printf("test!\r\n");
-  while(0 == GSMInit(HOST_NAME, HOST_PORT, http_buf)) GSM_restart();
-  //while(0 == HttpInit(http_buf));
-  //printf("%s\r\n", http_buf);
+
+	while(0 == trans_module_init(HOST_NAME, HOST_PORT, http_buf)) trans_module_restart();
+	
   All_State = initialTCP;
 }
 
@@ -386,9 +408,9 @@ void Initial_MQTT()
   mqtt_data.will.retained = 1;
 
   len = MQTTSerialize_connect(mqtt_buf, mqtt_buflen, &mqtt_data);  //这句话开始MQTT的连接，但是不直接和发送函数相连，而是存到一个buf里面，再从buf里面发送
-  sim800C_send(mqtt_buf, len);
+  trans_module_send(mqtt_buf, len);
 
-  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
+  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 	printf("rc = %d\r\n", rc);
   if ( rc == CONNACK)   //这里把获取数据的指针传了进去！！！
@@ -428,7 +450,7 @@ void MQTT_Sub0Pub1()
   topicString.cstring = topic_group;
   len = MQTTSerialize_subscribe(mqtt_buf, mqtt_buflen, 0, msgid, 1, &topicString, &req_qos);
   //所有这些都不是直接发送，而是通过先获取buffer，我们再手动发送出去
-  sim800C_send(mqtt_buf, len);
+  trans_module_send(mqtt_buf, len);
 
   mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
@@ -528,7 +550,7 @@ int Public_Open(int time)
     //strcpy(payload, http_buf);
     payloadlen = strlen(payload);
     len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, dup, qos, retain, packedid, topicString, (unsigned char*)payload, payloadlen);
-    sim800C_send(mqtt_buf, len);
+    trans_module_send(mqtt_buf, len);
 
     mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
     rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
@@ -572,7 +594,7 @@ void Transmission_State()
 
   /* transport_getdata() has a built-in 1 second timeout,
   your mileage will vary */
-  sim800C_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+  trans_module_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
   rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
   if (rc == PUBLISH)
   {
@@ -591,7 +613,7 @@ void Transmission_State()
     recv_mqtt(payload_in, payloadlen_in, payload, &payloadlen);
 		//返回接收到的命令
 		len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
-    sim800C_send(mqtt_buf, len);
+    trans_module_send(mqtt_buf, len);
   }
 
 	if(internal_flag == 1)	//internal_flag必须在send_flag之前处理，否则数组最后一位就为0
@@ -674,7 +696,7 @@ void SendJson(u8 mode)
 	group_json(mode);
 	payloadlen = strlen(payload);
 	len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
-	sim800C_send(mqtt_buf, len);
+	trans_module_send(mqtt_buf, len);
 	
 	printf("mode = %d, SendJson len = %d\r\n", mode, len);
 }
@@ -686,9 +708,9 @@ int SendPingPack(int times)
 	{
 		memset(mqtt_buf, 0, sizeof(mqtt_buf));
 		len = MQTTSerialize_pingreq(mqtt_buf, 100);
-		sim800C_send(mqtt_buf, len);
+		trans_module_send(mqtt_buf, len);
 
-		mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);	//sim800C_recv内实现了将数据存入fifo3的功能
+		mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
 		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
 		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
 		{

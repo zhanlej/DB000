@@ -8,6 +8,19 @@ typedef unsigned int uint32_t;
 typedef signed int int32_t;
 
 extern volatile unsigned long sys_tick;
+extern uint8_t sim_csq;	//为了上传csq数据给服务器
+
+#define TRANS_MODE 1 //透传模式
+
+#define HOST_NAME   "47.92.81.9"
+#ifdef SSL_MODE
+#define HOST_PORT   1883
+#else
+#define HOST_PORT   8883
+#endif
+
+#define MQTT_RECVBUF_SIZE 256
+#define MQTT_SEND_SIZE 1024
 
 #define RECV_BUF_SIZE  256//定义接收的缓存，尽可能的大，防止溢出
 #define TIME_OUT 100
@@ -24,7 +37,7 @@ extern volatile unsigned long sys_tick;
 
 //function
 void AutoLink(void);
-int WifiInit(const char *addr, uint32_t port);
+int WifiInit(const char *addr, uint32_t port, char *http_data);
 void timer1msINT(void);
 unsigned long millis(void);
 void delay(unsigned int ms);
@@ -39,5 +52,10 @@ int createTCP(const char *addr, uint32_t port);
 int wifi_send(const uint8_t *buffer, uint32_t len);
 int wifi_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 void rx_empty(void);
+
+void WIFI_restart(void);
+int esp8266_send(const uint8_t *buffer, uint32_t len);
+int esp8266_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
+int mqtt_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 
 #endif

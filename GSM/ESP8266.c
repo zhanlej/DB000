@@ -4,17 +4,22 @@
 //对 arduinoESP8266库部分函数由C++移植到C函数，方便51，ARM等C平台调用
 //对返回值由原来的true or false 改为返回int型 0表示失败 其他表示成功或其他原因返回
 #include <stdlib.h>
+#include <string.h>
 #include "serialportAPI.h"
 #include "ESP8266.h"
 #include "stringAPIext.h"
-#include "uart3.h"
+#include "uart.h"
 #include "MyFifo.h"
 
 volatile unsigned long sys_tick = 0;
 
+uint8_t sim_csq = 0;
+
 char data_rec[RECV_BUF_SIZE];
 
 static uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id);
+static int sATCIPSEND(void);
+static int sATCIPMODE(uint8_t mode);
 static int eATUART(uint32_t baud);
 static int eATRST(void);
 static int eAT(void);
@@ -47,7 +52,7 @@ void AutoLink(void)
   while (status != STATUS_GETIP)
   {
     uint32_t start_time = millis();
-    DBG("start auto link");
+    printf("start auto link\r\n");
     //10s自动连接时间
     while ((millis() - start_time < 10000) && status != STATUS_GETIP)
     {
@@ -59,13 +64,13 @@ void AutoLink(void)
     if (status != STATUS_GETIP)
     {
       char link_msg[RECV_BUF_SIZE];
-      DBG("start smartlink");
+      printf("start smartlink\r\n");
       stopSmartLink();
 
       if (1 == smartLink((uint8_t)ESP_AIR, link_msg))
       {
         stopSmartLink(); //无论配网是否成功，都需要释放快连所占的内存
-        DBG(link_msg);
+        printf("%s\r\n", link_msg);
         start_time = millis();//等待获取IP
         while ((millis() - start_time < 5000) && status != STATUS_GETIP)
         {
@@ -78,37 +83,46 @@ void AutoLink(void)
       {
         stopSmartLink();
         delay(500);
-        DBG("link AP fail");
+        printf("link AP fail\r\n");
         restart();
       }
     }
   }
-  DBG("link AP OK");
+  printf("link AP OK\r\n");
   //sATCWAUTOCONN(0); //开启自动连接模式
 }
 
-int WifiInit(const char *addr, uint32_t port)
+int WifiInit(const char *addr, uint32_t port, char *http_data)
 {
   while(0 == restart());
-  DBG("restart() ok!\r\n");
+  printf("restart() ok!\r\n");
   while(0 == setOprToStationSoftAP());
-  DBG("setOprToStationSoftAP() ok!\r\n");
+  printf("setOprToStationSoftAP() ok!\r\n");
   AutoLink();
   while(0 == disableMUX());
+#ifdef TRANS_MODE
+	if(!sATCIPMODE(1)) return 0;
+	printf("sATCIPMODE = 1 is OK!\r\n");
+#endif
 creattcp0:
   if (createTCP(addr, port))  //连接主机
   {
-    DBG("create tcp ok\r\n");
+    printf("create tcp ok\r\n");
   }
   else
   {
-    DBG("create tcp err\r\n");
+    printf("create tcp err\r\n");
     delay(2000);
     goto creattcp0;
   }
-  delay(1000);
+	delay(1000);
   if (getSystemStatus() == STATUS_GETLINK)
+	{
+		if(!sATCIPSEND()) return 0;
+		printf("sATCIPSEND is OK!\r\n");
+		ClearRxBuf(); //清除串口中所有缓存的数据
     return 1;
+	}
   else
     return 0;
 }
@@ -255,7 +269,23 @@ int wifi_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
 
 uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
 {
-
+#ifdef TRANS_MODE
+	unsigned long start;
+	int ret = 0;
+	char a;
+	
+	start = millis();
+	while (millis() - start < timeout)
+  {
+		if(SerialAvailable() > 0)
+    {
+      a = SerialRead();
+      buffer[ret++] = a;
+    }
+	}
+	
+	return ret;
+#else
   char a;
   int32_t index_PIPDcomma = 0;
   int32_t index_colon = 0; /* : */
@@ -349,6 +379,7 @@ uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint
     }
   }
   return 0;
+#endif
 }
 
 void rx_empty(void)
@@ -357,6 +388,22 @@ void rx_empty(void)
 //        SerialRead();
 //    }
   ClearRxBuf();
+}
+
+int sATCIPSEND(void)
+{
+  rx_empty();
+  SerialPrintln("AT+CIPSEND", STRING_TYPE);
+  return recvFind("OK", TIME_OUT);
+}
+
+int sATCIPMODE(uint8_t mode)
+{
+  int int_mode = mode;
+  rx_empty();
+  SerialPrint("AT+CIPMODE=", STRING_TYPE);
+  SerialPrintln(&int_mode, INT_TYPE);
+  return recvFind("OK", TIME_OUT);
 }
 
 int eATUART(uint32_t baud)
@@ -398,7 +445,7 @@ int eATCWSTARTSMART(uint8_t type, char *link_msg)
   SerialPrint("AT+CWSTARTSMART=", STRING_TYPE);
   SerialPrintln(&int_type, INT_TYPE);
   flag = recvFind("OK", TIME_OUT);
-  DBG("AT+CWSTARTSMART=3 is OK!\n");
+  printf("AT+CWSTARTSMART=3 is OK!\r\n");
   if(flag == 0) return flag;
   delay(50);//延时之后等待自动连接
   rx_empty();
@@ -528,6 +575,13 @@ int sATCIPSTARTSingle(const char *type, const char *addr, uint32_t port)
 
 int sATCIPSENDSingle(const uint8_t *buffer, uint32_t len)
 {
+#ifdef TRANS_MODE
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		SerialWrite(buffer[i]);
+	}
+#else
   uint8_t i;
   int int_len = len;
   rx_empty();
@@ -542,6 +596,7 @@ int sATCIPSENDSingle(const uint8_t *buffer, uint32_t len)
     }
     return recvFind("SEND OK", 10000);//10000
   }
+#endif
   return 0;
 }
 
@@ -632,7 +687,48 @@ int recvString3(char *rec_data, const char *target1, const char *target2, const 
   return 1;
 }
 
+void WIFI_restart(void)
+{
+	printf("WIFI_restart()\r\n");
+}
+	
+int esp8266_send(const uint8_t *buffer, uint32_t len)
+{
+	printf("---------- sim800C_send len = %d ----------\r\n", len);
+  return sATCIPSENDSingle(buffer, len);
+}
 
+int esp8266_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
+{
+	int i;
+  int len = 0;
+	memset(buffer, 0, buffer_size);	//为了清空原来的数据
+	
+  len = recvPkg(buffer, buffer_size, NULL, timeout, NULL);
+  //recv_fifo3是为了给MQTT用的
+  for(i = 0; i < len; i++)
+  {
+    if (Fifo_canPush(&recv_fifo3)) Fifo_Push(&recv_fifo3, *buffer);
+    buffer++;
+  }
+	if(len != 0)
+	{
+		printf("########## sim800C_recv len = %d ##########\r\n", len);
+	}
+  return len;
+}
+	
+int mqtt_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
+{
+	int i;
+	int len;
+	for(i = 0; i < 5; i++)
+	{
+		if((len = esp8266_recv(buffer, buffer_size, timeout)) != 0) break;
+	}
+	
+	return len;
+}
 
 
 

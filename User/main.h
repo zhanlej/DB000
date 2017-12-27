@@ -5,6 +5,10 @@
 //开盖检测引脚，后盖打开后要：失能物理按键；关闭所有灯；关闭风机；
 #define OPEN_COVER PBin(11)
 
+//transmission type 这两个宏为全局宏，因此在Option for Target中设置了
+//#define TRANS_GPRS 1
+#define TRANS_WIFI 1
+
 //ALL_Status
 #define initialWAITOK -1
 #define initialTCP -2
@@ -32,7 +36,7 @@
 #define SPEED2_LED PBout(8)
 #define SPEED3_LED PBout(9)
 
-void GPRS_USART(u32 baudRate);
+void TRANS_USART(u32 baudRate);
 void RCC_Configuration(void);
 void NVIC_Configuration(void);
 void GPIO_Configuration(void);
@@ -40,7 +44,7 @@ void TIM3_Int_Init(u16 arr,u16 psc);
 
 //通过状态机的方式控制整个代码流程
 void restart_MCU(void);
-void Initial_GSM(void);
+void Initial_trans_module(void);
 void Initial_MQTT(void);
 void MQTT_Sub0Pub1(void);
 int Public_Open(int time);	//发布开机指令
