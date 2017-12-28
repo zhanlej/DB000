@@ -1,6 +1,7 @@
 #ifndef __ESP8266_H__
 #define __ESP8266_H__
 
+#include "sys.h"
 
 typedef unsigned char uint8_t;
 typedef signed char int8_t;
@@ -21,6 +22,7 @@ extern uint8_t sim_csq;	//为了上传csq数据给服务器
 
 #define MQTT_RECVBUF_SIZE 256
 #define MQTT_SEND_SIZE 1024
+#define WIFI_RST_PIN PBout(0)
 
 #define RECV_BUF_SIZE  256//定义接收的缓存，尽可能的大，防止溢出
 #define TIME_OUT 100

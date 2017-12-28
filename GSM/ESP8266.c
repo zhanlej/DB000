@@ -94,9 +94,11 @@ void AutoLink(void)
 
 int WifiInit(const char *addr, uint32_t port, char *http_data)
 {
-  while(0 == restart());
+	WIFI_RST_PIN = 1; //将RST置高
+	delay(1000); //延时等待一会
+	if(!restart()) return 0;
   printf("restart() ok!\r\n");
-  while(0 == setOprToStationSoftAP());
+	if(!setOprToStationSoftAP()) return 0;
   printf("setOprToStationSoftAP() ok!\r\n");
   AutoLink();
   while(0 == disableMUX());

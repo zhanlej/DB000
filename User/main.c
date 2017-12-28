@@ -150,15 +150,17 @@ void TRANS_USART(u32 baudRate)
 	GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY 或者 WIFI模块的RST
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_ResetBits(GPIOB, GPIO_Pin_0); //PB0上电低电平
-	
+
+#ifdef TRANS_GPRS	
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;     //GPRS模块VBAT
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
   GPIO_SetBits(GPIOA, GPIO_Pin_1); //PA1上电低电平
+#endif
 	
 	USART1Conf(baudRate, 0, 0);
 	
@@ -263,15 +265,17 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY 或者 WIFI模块的RST
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_ResetBits(GPIOB, GPIO_Pin_0); //PB0上电低电平
-	
+
+#ifdef TRANS_GPRS
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;     //GPRS模块VBAT
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
   GPIO_SetBits(GPIOA, GPIO_Pin_1); //PA1上电低电平
+#endif
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;   //USART1 TX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //复用推挽输出
