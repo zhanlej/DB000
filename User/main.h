@@ -2,9 +2,6 @@
 
 //#define SWIO_DEBUG
 
-//开盖检测引脚，后盖打开后要：失能物理按键；关闭所有灯；关闭风机；
-#define OPEN_COVER PBin(11)
-
 //transmission type 这两个宏为全局宏，因此在Option for Target中设置了
 //#define TRANS_GPRS 1
 #define TRANS_WIFI 1

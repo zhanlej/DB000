@@ -26,7 +26,7 @@ extern char mqtt_mode[2];
 extern volatile unsigned char fan_level;
 extern char payload[MQTT_SEND_SIZE];
 
-int CSQ[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
+//int CSQ[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 //int HCHO[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 int C1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 int C2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
@@ -78,7 +78,7 @@ void SendDataMode_group(cJSON *root)
 //    cJSON_AddItemToArray(j_l, cJSON_CreateNumber(L[i]));
 //  }
 
-	cJSON_AddItemToObject(root, "CSQ", cJSON_CreateIntArray(CSQ, trans_size));
+	//cJSON_AddItemToObject(root, "CSQ", cJSON_CreateIntArray(CSQ, trans_size));
 	//cJSON_AddItemToObject(aqi, "HCHO", cJSON_CreateIntArray(HCHO, trans_size));
 	cJSON_AddItemToObject(aqi, "C1", cJSON_CreateIntArray(C1, trans_size));
 	cJSON_AddItemToObject(aqi, "C2", cJSON_CreateIntArray(C2, trans_size));
@@ -176,7 +176,7 @@ void NoPress_Connection_group(cJSON *root)
 void GprsRecordMode_group(cJSON *root)
 {
   //eATCSQ(&sim_csq);	//获取当前csq值
-  cJSON_AddNumberToObject(root, "CSQ", sim_csq);
+  //cJSON_AddNumberToObject(root, "CSQ", sim_csq);
   cJSON_AddNumberToObject(root, "current_date", UNIXtime2date(RTC_GetCounter()));
   cJSON_AddNumberToObject(root, "current_time", RTC_GetCounter());
   //cJSON_AddNumberToObject(root, "time_out", UNIXtime2date(BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16)));
@@ -191,7 +191,7 @@ void GprsRecordMode_group(cJSON *root)
 void group_json(unsigned char mode)
 {
   cJSON *root = NULL;
-  cJSON *http_root = NULL;
+//  cJSON *http_root = NULL;
   char *out = NULL;
   int JSON_len = 0;
 
@@ -202,10 +202,10 @@ void group_json(unsigned char mode)
     case CONNECTION_MODE:
       ConnectionMode_group(root);
       break;
-    case GEO_MODE:
-      http_root = cJSON_Parse(http_buf);
-      if(http_root != NULL)	cJSON_AddItemReferenceToObject(root, "geo", http_root);
-      break;
+//    case GEO_MODE:
+//      http_root = cJSON_Parse(http_buf);
+//      if(http_root != NULL)	cJSON_AddItemReferenceToObject(root, "geo", http_root);
+//      break;
     case SENDDATA_MODE:
       SendDataMode_group(root);
       break;
@@ -229,7 +229,7 @@ void group_json(unsigned char mode)
   //printf("%s\r\n", out);
 
   free(out);
-  if(mode == GEO_MODE) cJSON_Delete(http_root);
+//  if(mode == GEO_MODE) cJSON_Delete(http_root);
   cJSON_Delete(root);
 }
 

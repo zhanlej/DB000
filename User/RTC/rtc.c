@@ -108,36 +108,34 @@ u8 RTC_Init(u32 year, u8 month, u8 day, u8 hour, u8 min, u8 sec)
 //extern u16 tcnt;
 void RTC_IRQHandler(void)
 {
-	u32 curruent_time;
-	u32 timeout_time;
+//	u32 curruent_time;
+//	u32 timeout_time;
   if (RTC_GetITStatus(RTC_IT_SEC) != RESET)//秒钟中断
   {
     RTC_Get();//更新时间
-//    printf("Alarm Time:%d-%d-%d %d:%d:%d\r\n", calendar.w_year, calendar.w_month, calendar.w_date, calendar.hour, calendar.min, calendar.sec); //输出闹铃时间
-		//timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
-		//if(BKP_ReadBackupRegister(BKP_DR2) || BKP_ReadBackupRegister(BKP_DR3))	//判断如果超时期限不是0的话说明超时时间被设置过
-		if(Flash_Read_Number(FLASH_SAVE_ADDR+4) == 0xaaaaaaaa)	//判断如果超时期限不是全f的话说明超时时间被设置过
-		{
-			curruent_time = RTC_GetCounter();
-			timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
-			//timeout_time = BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16);
-			
-			if((curruent_time >= timeout_time) && (s_Powerkey.timeout_flag == 0))
-			{
-				printf("time out!\r\n");
-				s_Powerkey.timeout_flag = 1;
-				//EXTI_DeInit();
-			}
-			else if((curruent_time < timeout_time) && (s_Powerkey.timeout_flag == 1))
-			{
-				s_Powerkey.timeout_flag = 0;
-				//EXTIX_Init();	
-			}
-		}
-		else
-		{
-			s_Powerkey.timeout_flag = 1;
-		}
+
+//		if(Flash_Read_Number(FLASH_SAVE_ADDR+4) == 0xaaaaaaaa)	//判断如果超时期限不是全f的话说明超时时间被设置过
+//		{
+//			curruent_time = RTC_GetCounter();
+//			timeout_time = Flash_Read_Number(FLASH_SAVE_ADDR);
+//			//timeout_time = BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16);
+//			
+//			if((curruent_time >= timeout_time) && (s_Powerkey.timeout_flag == 0))
+//			{
+//				printf("time out!\r\n");
+//				s_Powerkey.timeout_flag = 1;
+//				//EXTI_DeInit();
+//			}
+//			else if((curruent_time < timeout_time) && (s_Powerkey.timeout_flag == 1))
+//			{
+//				s_Powerkey.timeout_flag = 0;
+//				//EXTIX_Init();	
+//			}
+//		}
+//		else
+//		{
+//			s_Powerkey.timeout_flag = 1;
+//		}
   }
   if(RTC_GetITStatus(RTC_IT_ALR) != RESET) //闹钟中断
   {

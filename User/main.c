@@ -301,10 +301,6 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;//推挽复用输出
   GPIO_Init(GPIOB, &GPIO_InitStructure); //将初始化好的结构体装入寄存器
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;//USART3 RX
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//GPIO模式悬浮输入
-  GPIO_Init(GPIOB, &GPIO_InitStructure);//将初始化好的结构体装入寄存器
-
 }
 
 void NVIC_Configuration(void)  //中断优先级NVIC设置
@@ -520,10 +516,10 @@ void MQTT_Sub0Pub1()
   sprintf(topic_group, "SHAir/%s/update", deviceID);
   printf("pubtopic = %s", topic_group);
   topicString.cstring = topic_group;
+	
 	//连接上网络的声音
 	beep_on(BEEP_CONNECT);
-//	delay(100);
-//	beep_on(BEEP_TIME);
+
 	//记录连接时间
 	if(gprs_connect_cnt == 0)
 		gprs_connect_time[gprs_connect_cnt] = UNIXtime2date(RTC_GetCounter());
@@ -531,10 +527,11 @@ void MQTT_Sub0Pub1()
 		gprs_connect_time[gprs_connect_cnt] = RTC_GetCounter() - break_time;
 	gprs_connect_cnt++;
 	if(gprs_connect_cnt >= GPRS_STATE_TIME_SIZE)	gprs_connect_cnt = 0;
+	
 	//发送断网期间的物理按键记录，如果没有操作物理按键则发送mode数据。
 	SendJson(CONNECTION_MODE);
-	//紧接着发送地理位置信息。
-	SendJson(GEO_MODE);
+//	//紧接着发送地理位置信息。
+//	SendJson(GEO_MODE);
 }
 
 int Public_Open(int time)
@@ -620,21 +617,21 @@ void Transmission_State()
     trans_module_send(mqtt_buf, len);
   }
 
-	if(internal_flag == 1)	//internal_flag必须在send_flag之前处理，否则数组最后一位就为0
-	{
-		internal_flag = 0;
-				
-		//eATCSQ(&sim_csq);	//获取当前csq值		
-		
-		if(send_flag == 1) //因为tim3_cnt是在中断中计算的，当send_flag=1时tim3_cnt立即清零，因此只能用current_interval的值来定位最后一个数据的位置
-		{
-			CSQ[(current_interval / COUNT_INTERVAL) - 1] = sim_csq;
-		}
-		else 
-		{
-			CSQ[(tim3_cnt / COUNT_INTERVAL) - 1] = sim_csq;
-		}
-	}
+//	if(internal_flag == 1)	//internal_flag必须在send_flag之前处理，否则数组最后一位就为0
+//	{
+//		internal_flag = 0;
+//				
+//		//eATCSQ(&sim_csq);	//获取当前csq值		
+//		
+//		if(send_flag == 1) //因为tim3_cnt是在中断中计算的，当send_flag=1时tim3_cnt立即清零，因此只能用current_interval的值来定位最后一个数据的位置
+//		{
+//			CSQ[(current_interval / COUNT_INTERVAL) - 1] = sim_csq;
+//		}
+//		else 
+//		{
+//			CSQ[(tim3_cnt / COUNT_INTERVAL) - 1] = sim_csq;
+//		}
+//	}
 	
   if(send_flag == 1)
   {
@@ -669,7 +666,7 @@ void TIM3_IRQHandler(void)   //TIM3中断
 
     if(tim3_cnt % COUNT_INTERVAL == 0)
     {
-			internal_flag = 1;	//还有个CSQ的数据不在中断中进行处理，因为只有当连上网络才能获取CSQ值，并且获取CSQ的函数里有延迟尽量不要在中断中执行
+//			internal_flag = 1;	//还有个CSQ的数据不在中断中进行处理，因为只有当连上网络才能获取CSQ值，并且获取CSQ的函数里有延迟尽量不要在中断中执行
 			
 			//HCHO[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_HCHO;
 			C1[(tim3_cnt / COUNT_INTERVAL) - 1] = Conce_PM2_5;
@@ -768,8 +765,8 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 				if(timeout_count > 1502883485 && timeout_count < 2147483647)
 				{
 					printf("expiresAt = %d\r\n", timeout_count);
-					Flash_Write_Number(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
-					Flash_Write_Number(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
+//					Flash_Write_Number(timeout_count, FLASH_SAVE_ADDR); //将超时时间写入stm32的flash中，写入地址必须比当前代码的大小要大
+//					Flash_Write_Number(0xaaaaaaaa, FLASH_SAVE_ADDR+4);
 				}
 				else printf("expiresAt number is Error\r\n");
 			}
