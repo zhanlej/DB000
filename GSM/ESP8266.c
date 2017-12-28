@@ -12,8 +12,7 @@
 #include "MyFifo.h"
 
 volatile unsigned long sys_tick = 0;
-
-uint8_t sim_csq = 0;
+unsigned char smartconfig_flag = 0;
 
 char data_rec[RECV_BUF_SIZE];
 
@@ -46,50 +45,88 @@ static int recvString3(char *rec_data, const char *target1, const char *target2,
   输    入 ：无
   输    出 ：无
 *******************************************************************************/
-void AutoLink(void)
+int AutoLink(void)
 {
   int status = STATUS_LOSTIP;
-  while (status != STATUS_GETIP)
-  {
-    uint32_t start_time = millis();
-    printf("start auto link\r\n");
-    //10s自动连接时间
-    while ((millis() - start_time < 10000) && status != STATUS_GETIP)
-    {
-      status = getSystemStatus();
-      delay(1000);
-    }
+	uint32_t start_time = millis();
+	
+	printf("start auto link\r\n");
+	//10s自动连接时间
+	while ((millis() - start_time < 10000) && status != STATUS_GETIP)
+	{
+		status = getSystemStatus();
+		delay(1000);
+	}
 
-    //连接失败进入smartlink模式 30s
-    if (status != STATUS_GETIP)
-    {
-      char link_msg[RECV_BUF_SIZE];
-      printf("start smartlink\r\n");
-      stopSmartLink();
+//	//连接失败进入smartlink模式 30s
+//	if (status != STATUS_GETIP)
+//	{
+//		char link_msg[RECV_BUF_SIZE];
+//		printf("start smartlink\r\n");
+//		stopSmartLink();
 
-      if (1 == smartLink((uint8_t)ESP_AIR, link_msg))
-      {
-        stopSmartLink(); //无论配网是否成功，都需要释放快连所占的内存
-        printf("%s\r\n", link_msg);
-        start_time = millis();//等待获取IP
-        while ((millis() - start_time < 5000) && status != STATUS_GETIP)
-        {
-          status = getSystemStatus();
-          delay(500);
-        }
-        sATCWAUTOCONN(1); //开启自动连接模式
-      }
-      else
-      {
-        stopSmartLink();
-        delay(500);
-        printf("link AP fail\r\n");
-        restart();
-      }
-    }
-  }
-  printf("link AP OK\r\n");
-  //sATCWAUTOCONN(0); //开启自动连接模式
+//		if (1 == smartLink((uint8_t)ESP_AIR, link_msg))
+//		{
+//			stopSmartLink(); //无论配网是否成功，都需要释放快连所占的内存
+//			printf("%s\r\n", link_msg);
+//			start_time = millis();//等待获取IP
+//			while ((millis() - start_time < 5000) && status != STATUS_GETIP)
+//			{
+//				status = getSystemStatus();
+//				delay(500);
+//			}
+//			sATCWAUTOCONN(1); //开启自动连接模式
+//		}
+//		else
+//		{
+//			stopSmartLink();
+//			delay(500);
+//			printf("link AP fail\r\n");
+//			restart();
+//		}
+//	}
+	
+	if (status == STATUS_GETIP)
+		return 1;
+	else
+		return 0;
+}
+
+/*******************************************************************************
+  函 数 名 ：SmartConfig
+  函数功能 ：开始smartconfig配网模式
+  输    入 ：无
+  输    出 ：无
+*******************************************************************************/
+int SmartConfig(void)
+{
+	int status = STATUS_LOSTIP;
+	uint32_t start_time = millis();
+	char link_msg[RECV_BUF_SIZE];
+	
+	printf("start smartlink\r\n");
+	stopSmartLink();
+
+	if (1 == smartLink((uint8_t)ESP_AIR, link_msg))
+	{
+		stopSmartLink(); //无论配网是否成功，都需要释放快连所占的内存
+		printf("%s\r\n", link_msg);
+		start_time = millis();//等待获取IP
+		while ((millis() - start_time < 5000) && status != STATUS_GETIP)
+		{
+			status = getSystemStatus();
+			delay(500);
+		}
+		sATCWAUTOCONN(1); //开启自动连接模式
+		return 1;
+	}
+	else
+	{
+		stopSmartLink();
+		delay(500);
+		printf("link AP fail\r\n");
+		return 0;
+	}
 }
 
 int WifiInit(const char *addr, uint32_t port, char *http_data)
@@ -100,23 +137,28 @@ int WifiInit(const char *addr, uint32_t port, char *http_data)
   printf("restart() ok!\r\n");
 	if(!setOprToStationSoftAP()) return 0;
   printf("setOprToStationSoftAP() ok!\r\n");
-  AutoLink();
-  while(0 == disableMUX());
+	
+	if(smartconfig_flag)
+	{
+		smartconfig_flag = 0;
+		if(!SmartConfig()) return 0;
+		printf("SmartConfig() ok!\r\n");
+	}
+	else
+	{
+		if(!AutoLink()) return 0;
+		printf("AutoLink() ok!\r\n");
+	}
+
+  if(!disableMUX()) return 0;
+	printf("disableMUX() ok!\r\n");
 #ifdef TRANS_MODE
 	if(!sATCIPMODE(1)) return 0;
 	printf("sATCIPMODE = 1 is OK!\r\n");
 #endif
-creattcp0:
-  if (createTCP(addr, port))  //连接主机
-  {
-    printf("create tcp ok\r\n");
-  }
-  else
-  {
-    printf("create tcp err\r\n");
-    delay(2000);
-    goto creattcp0;
-  }
+
+  if (!createTCP(addr, port)) return 0;  //连接主机
+  printf("create tcp ok\r\n");
 	delay(1000);
   if (getSystemStatus() == STATUS_GETLINK)
 	{
@@ -418,6 +460,13 @@ int eATUART(uint32_t baud)
   return recvFind("OK", TIME_OUT);
 }
 
+int eATRESTORE(void)
+{
+  rx_empty();
+  SerialPrintln("AT+RESTORE", STRING_TYPE);
+  return recvFind("OK", TIME_OUT);
+}
+
 int eATRST(void)
 {
   rx_empty();
@@ -494,12 +543,13 @@ int sATCWMODE(uint8_t mode)
   SerialPrint("AT+CWMODE=", STRING_TYPE);
   SerialPrintln(&int_mode, INT_TYPE);
 
-  recvString2(data_rec, "OK", "no change", TIME_OUT);
-  if (StringIndex(data_rec, "OK") != -1 || StringIndex(data_rec, "no change") != -1)
-  {
-    return 0;
-  }
-  return 1;
+//  recvString2(data_rec, "OK", "no change", TIME_OUT);
+//  if (StringIndex(data_rec, "OK") != -1 || StringIndex(data_rec, "no change") != -1)
+//  {
+//    return 0;
+//  }
+//  return 1;
+	return recvFind("OK", TIME_OUT);
 }
 
 int sATCWAUTOCONN(uint8_t mode)
@@ -691,7 +741,24 @@ int recvString3(char *rec_data, const char *target1, const char *target2, const 
 
 void WIFI_restart(void)
 {
+	unsigned long start;
+	
 	printf("WIFI_restart()\r\n");
+	WIFI_RST_PIN = 0;
+	delay(1000);
+	WIFI_RST_PIN = 1;
+	delay(2000);
+    start = millis();
+    while (millis() - start < 3000)
+    {
+      if (eAT())
+      {
+        delay(1500); /* Waiting for stable */
+        printf("WIFI_restart() is OK!\r\n");
+				return;
+      }
+      delay(100);
+    }
 }
 	
 int esp8266_send(const uint8_t *buffer, uint32_t len)

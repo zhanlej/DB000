@@ -54,7 +54,7 @@ unsigned int current_interval = CLOSE_INTERVAL;
 volatile unsigned char fan_level = 0; //自动模式下的速度档位
 
 
-short All_State = initialWAITOK;
+CONNECT_STATUS_ENUM All_State = initialWAITOK;
 char http_buf[512];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
 char deviceID[20] = "200025";
@@ -124,24 +124,38 @@ int main()
 			auto_flag = 0;
 		}
 		
-    switch (All_State)
-    {
-      case initialWAITOK:
-        Initial_trans_module();
-        break;
-      case initialTCP:
-        Initial_MQTT();
-        break;
-      case initialMQTT:
-        MQTT_Sub0Pub1();
-        break;
-      case sendPM:
-        Transmission_State();
-        break;
-      default:
-        LedCountrol(0x0);
-        break;
-    }
+		//检测到组合按键
+		if(key_flag.Comb_flag == 1)
+		{
+			key_flag.Comb_flag = 0;
+			All_State = initialWAITOK;
+			smartconfig_flag = 1;
+			trans_module_restart();
+			if(eATRESTORE()) printf("eATRESTORE is OK \r\n");
+			else printf("eATRESTORE is Fail \r\n");
+		}
+		
+		if(All_State != DISCNNECT)	//当连网不失败才会进入连网的数据处理
+		{
+			switch (All_State)
+			{
+				case initialWAITOK:
+					Initial_trans_module();
+					break;
+				case initialTCP:
+					Initial_MQTT();
+					break;
+				case initialMQTT:
+					MQTT_Sub0Pub1();
+					break;
+				case sendPM:
+					Transmission_State();
+					break;
+				default:
+					LedCountrol(0x0);
+					break;
+			}
+		}
   }
 }
 
@@ -384,9 +398,17 @@ void Initial_trans_module()
 {
   printf("test!\r\n");
 
-	while(0 == trans_module_init(HOST_NAME, HOST_PORT, http_buf)) trans_module_restart();
-	
-  All_State = initialTCP;
+	//while(0 == trans_module_init(HOST_NAME, HOST_PORT, http_buf)) trans_module_restart();
+	if(trans_module_init(HOST_NAME, HOST_PORT, http_buf))
+	{
+		printf("trans_module_init is OK!");
+		All_State = initialTCP;
+	}
+	else
+	{
+		printf("trans_module_init is FAIL!");
+		All_State = DISCNNECT;
+	}
 }
 
 void Initial_MQTT()
@@ -781,12 +803,12 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 			if(cJSON_IsTrue(cJSON_GetObjectItem(mqtt_recv_root, "childLock")))
 			{
 				printf("childLock is true\r\n");
-				s_Powerkey.ChildLock_flag = 1;
+				key_flag.ChildLock_flag = 1;
 			}
 			else if(cJSON_IsFalse(cJSON_GetObjectItem(mqtt_recv_root, "childLock")))
 			{
 				printf("childLock is false\r\n");
-				s_Powerkey.ChildLock_flag = 0;
+				key_flag.ChildLock_flag = 0;
 			}
 			else	printf("childLock ERROR!!!\r\n");
     }

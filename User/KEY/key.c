@@ -17,8 +17,9 @@
 //u32 press_C2[PRESS_SIZE];
 //u32 press_AQI[PRESS_SIZE];
 
+KEY_FLAG_T key_flag;	//按键相关标示结构体
 BUTTON_T s_Powerkey;	//power按键的结构体
-BUTTON_T s_Modekey;	//mode按键的结构体
+BUTTON_T s_Modekey;		//mode按键的结构体
 
 //是否有POWER按键按下接口函数
 unsigned char  IsKeyDownPower(void)
@@ -42,6 +43,9 @@ void  PanakeyHard_Init(void)
 
 void  PanakeyVar_Init(void)
 {
+	key_flag.ChildLock_flag = 0;	//童锁标志，0为童锁无效，1为童锁有效
+	key_flag.Comb_flag = 0;				//组合按键标示
+	
   /* 初始化POWER按键变量，支持按下、弹起、长按 */
 	s_Powerkey.key_type = KEY_TPYE_POWER;
   s_Powerkey.IsKeyDownFunc = IsKeyDownPower;                /* 判断按键按下的函数 */
@@ -55,8 +59,7 @@ void  PanakeyVar_Init(void)
   s_Powerkey.RepeatSpeed = 0;                                                /* 按键连发的速度，0表示不支持连发 */
   s_Powerkey.RepeatCount = 0;                                                /* 连发计数器 */
 	s_Powerkey.IsLong = 0;
-	s_Powerkey.timeout_flag = 0;
-	s_Powerkey.ChildLock_flag = 0;
+	s_Powerkey.IsComb = 0;
 	
 	/* 初始化MODE按键变量，支持按下、弹起、长按 */
 	s_Modekey.key_type = KEY_TPYE_MODE;
@@ -71,8 +74,7 @@ void  PanakeyVar_Init(void)
   s_Modekey.RepeatSpeed = 0;                                                /* 按键连发的速度，0表示不支持连发 */
   s_Modekey.RepeatCount = 0;                                                /* 连发计数器 */
 	s_Modekey.IsLong = 0;
-	s_Modekey.timeout_flag = 0;
-	s_Modekey.ChildLock_flag = 0;
+	s_Modekey.IsComb = 0;
 }
 
 void Panakey_Init(void)
@@ -120,24 +122,13 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		}
 		else if(KeyCode == KEY_UP_Power)
 		{
-			printf("POWER short press\r\n");
+			printf("POWER key up\r\n");
 			if(*mqtt_mode == '0')
 				strcpy(mqtt_mode,"A");
 			else
 				strcpy(mqtt_mode,"0");
 			ModeCountrol();
 //			SavePressLog();
-		}
-		else if(KeyCode == KEY_LONG_Power)
-		{
-			printf("POWER long press\r\n");
-//			strcpy(mqtt_mode, "0");
-//			ModeCountrol();
-//			SavePressLog();
-		}
-		else
-		{
-			printf("POWER KeyCode is error!\r\n");
 		}
 	}
 	else if(key_type == KEY_TPYE_MODE)
@@ -149,7 +140,7 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		}
 		else if(KeyCode == KEY_UP_Power)
 		{
-			printf("MODE short press\r\n");
+			printf("MODE key up\r\n");
 			switch(*mqtt_mode)
 			{
 				case 'A':
@@ -176,17 +167,16 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 //			ModeCountrol();
 //			SavePressLog();
 		}
-		else if(KeyCode == KEY_LONG_Power)
-		{
-			printf("MODE long press\r\n");
-//			strcpy(mqtt_mode, "0");
-//			ModeCountrol();
-//			SavePressLog();
-		}
-		else
-		{
-			printf("MODE KeyCode is error!\r\n");
-		}
+	}
+	
+	//只有两个按键都长按才能出发组合键
+	if(KeyCode == KEY_LONG_Power && s_Powerkey.IsLong == 1 && s_Modekey.IsLong == 1)
+	{
+		//设置组合键的flag
+		s_Powerkey.IsComb = 1;
+		s_Modekey.IsComb = 1;
+		printf("Combine key - wifi restore!\r\n");
+		key_flag.Comb_flag = 1;
 	}
 }
 
@@ -233,8 +223,8 @@ void Button_Detect(BUTTON_T *_pBtn)
           if (++_pBtn->LongCount == _pBtn->LongTime)
           {
             /* 键值放入按键FIFO */
-            Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeLong);
 						_pBtn->IsLong = 1;
+            Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeLong);
           }
         }
         else
@@ -273,7 +263,8 @@ void Button_Detect(BUTTON_T *_pBtn)
         if (_pBtn->KeyCodeUp > 0) /*按键释放*/
         {
           /* 键值放入按键FIFO */
-					if(_pBtn->IsLong != 1) Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeUp);
+					if(_pBtn->IsComb != 1) Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeUp);
+					_pBtn->IsComb = 0;
 					_pBtn->IsLong = 0;
         }
 				_pBtn->LongCount = 0;

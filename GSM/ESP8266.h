@@ -9,7 +9,7 @@ typedef unsigned int uint32_t;
 typedef signed int int32_t;
 
 extern volatile unsigned long sys_tick;
-extern uint8_t sim_csq;	//为了上传csq数据给服务器
+extern unsigned char smartconfig_flag;	//标志着是否需要进行smartconfig
 
 #define TRANS_MODE 1 //透传模式
 
@@ -38,7 +38,8 @@ extern uint8_t sim_csq;	//为了上传csq数据给服务器
 #define STATUS_LOSTIP 5 //未获取到IP
 
 //function
-void AutoLink(void);
+int AutoLink(void);
+int SmartConfig(void);
 int WifiInit(const char *addr, uint32_t port, char *http_data);
 void timer1msINT(void);
 unsigned long millis(void);
@@ -55,6 +56,7 @@ int wifi_send(const uint8_t *buffer, uint32_t len);
 int wifi_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 void rx_empty(void);
 
+int eATRESTORE(void);
 void WIFI_restart(void);
 int esp8266_send(const uint8_t *buffer, uint32_t len);
 int esp8266_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);

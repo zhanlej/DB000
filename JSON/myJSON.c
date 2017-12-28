@@ -181,7 +181,7 @@ void GprsRecordMode_group(cJSON *root)
   cJSON_AddNumberToObject(root, "current_time", RTC_GetCounter());
   //cJSON_AddNumberToObject(root, "time_out", UNIXtime2date(BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16)));
   cJSON_AddNumberToObject(root, "time_out", Flash_Read_Number(FLASH_SAVE_ADDR));
-  cJSON_AddBoolToObject(root, "childLock", s_Powerkey.ChildLock_flag);
+  cJSON_AddBoolToObject(root, "childLock", key_flag.ChildLock_flag);
   cJSON_AddItemToObject(root, "connect", cJSON_CreateIntArray(gprs_connect_time, gprs_connect_cnt));
   cJSON_AddItemToObject(root, "break", cJSON_CreateIntArray(gprs_break_time, gprs_break_cnt));
   cJSON_AddNumberToObject(root, "C1", Conce_PM2_5);

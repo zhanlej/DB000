@@ -7,10 +7,14 @@
 #define TRANS_WIFI 1
 
 //ALL_Status
-#define initialWAITOK -1
-#define initialTCP -2
-#define initialMQTT -3
-#define sendPM -4
+typedef enum
+{
+	DISCNNECT,                        /* 表示power按键 */
+  initialWAITOK,                       /* 表示power按键 */
+	initialTCP,               			         /* 表示mode按键 */
+	initialMQTT,                       /* 表示power按键 */
+	sendPM                        /* 表示power按键 */	
+} CONNECT_STATUS_ENUM;
 
 //控制电机速度
 #define MOTORSPEED0 0x0

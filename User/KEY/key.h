@@ -15,6 +15,17 @@ typedef enum
 	KEY_TPYE_MODE               			         /* 表示mode按键 */
 } KEY_TPYE_ENUM;
 
+typedef enum
+{
+  KEY_NONE = 0,                        /* 0 表示按键事件 */
+
+  KEY_DOWN_Power,                        /* 按键键按下 */
+  KEY_UP_Power,                        /* 按键键弹起 */
+  KEY_LONG_Power,                        /* 按键键长按 */
+
+  KEY_DOWN_Power_TAMPER        /* 组合键，Power键和WAKEUP键同时按下 */
+} KEY_ENUM;
+
 /*
         每个按键对应1个全局的结构体变量。
         其成员变量是实现滤波和多种按键状态所必须的
@@ -35,30 +46,25 @@ typedef struct
   unsigned char  RepeatSpeed;        /* 连续按键周期 */
   unsigned char  RepeatCount;        /* 连续按键计数器 */
 	unsigned char  IsLong;       			 /* 判断是不是长按 */
-	unsigned char  timeout_flag;       /* 超时标志 */
-	unsigned char  ChildLock_flag;     /* 儿童锁标志 */
+	unsigned char  IsComb;      			 /* 判断是否有组合键发生 */
 } BUTTON_T;
 
-typedef enum
+typedef struct
 {
-  KEY_NONE = 0,                        /* 0 表示按键事件 */
-
-  KEY_DOWN_Power,                        /* 按键键按下 */
-  KEY_UP_Power,                        /* 按键键弹起 */
-  KEY_LONG_Power,                        /* 按键键长按 */
-
-  KEY_DOWN_Power_TAMPER        /* 组合键，Power键和WAKEUP键同时按下 */
-} KEY_ENUM;
+	unsigned char ChildLock_flag;	//童锁标示
+	unsigned char Comb_flag;			//组合按键标示
+} KEY_FLAG_T;
 
 
-extern BUTTON_T s_Powerkey;
+//extern BUTTON_T s_Powerkey;
+extern KEY_FLAG_T key_flag;
 extern char mqtt_mode[2]; //通过mqtt接收到的指令
-extern short All_State;	//为了过滤正常连接时多次按键产生的数组
-extern volatile int Conce_PM2_5;       // PM2.5浓度
-extern volatile int Conce_PM10;        // PM10浓度
-extern volatile int AQI_2_5;
-extern volatile int AQI_10;
-extern volatile int AQI_Max;								//MAX(AQI_2_5,AQI_10)
+//extern short All_State;	//为了过滤正常连接时多次按键产生的数组
+//extern volatile int Conce_PM2_5;       // PM2.5浓度
+//extern volatile int Conce_PM10;        // PM10浓度
+//extern volatile int AQI_2_5;
+//extern volatile int AQI_10;
+//extern volatile int AQI_Max;								//MAX(AQI_2_5,AQI_10)
 
 //extern unsigned char wait_send_press;
 //extern int press_len;
