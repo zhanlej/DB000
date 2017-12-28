@@ -198,12 +198,12 @@ void GPIO_Configuration(void)
 	// 改变指定管脚的映射 GPIO_Remap_SWJ_JTAGDisable ，JTAG-DP 禁用 + SW-DP 使能
 #endif
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;     //信号灯--PB3
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;     //物理按键开关机--PB3
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_3);
+  //GPIO_SetBits(GPIOB, GPIO_Pin_3);
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;     //物理按键
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;     //物理按键模式切换--PB4
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   //GPIO_SetBits(GPIOB, GPIO_Pin_14);
@@ -568,13 +568,13 @@ int Public_Open(int time)
 
 void Transmission_State()
 {
-	//发送断网期间物理按键记录
-	if(wait_send_press == 1)
-	{
-		wait_send_press = 0;
-		printf("send press!\r\n");
-		SendJson(PRESS_MODE);
-	}
+//	//发送断网期间物理按键记录
+//	if(wait_send_press == 1)
+//	{
+//		wait_send_press = 0;
+//		printf("send press!\r\n");
+//		SendJson(PRESS_MODE);
+//	}
 	
 	//发送心跳包
 	if(ping_flag == 1)
@@ -652,9 +652,9 @@ void TIM3_IRQHandler(void)   //TIM3中断
   {
     TIM_ClearITPendingBit(TIM3, TIM_IT_Update  );  //清除TIMx更新中断标志
 		
-		//GPRS信号指示灯
-		if(All_State == sendPM)	SIGNAL_LED = 0;
-		else	SIGNAL_LED = !SIGNAL_LED;
+//		//GPRS信号指示灯
+//		if(All_State == sendPM)	SIGNAL_LED = 0;
+//		else	SIGNAL_LED = !SIGNAL_LED;
 		
 		if(tim3_cnt % AUTOMODE_INTERVAL == 0)
 		{

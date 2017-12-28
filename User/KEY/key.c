@@ -8,20 +8,29 @@
 #include "aqi.h"
 //#include "DSHCHO.h"
 
-unsigned char wait_send_press;
-int press_len;
-char press_buf[PRESS_SIZE][2];
-u32 press_time_log[PRESS_SIZE];
-//u32 press_HCHO[PRESS_SIZE];
-u32 press_C1[PRESS_SIZE];
-u32 press_C2[PRESS_SIZE];
-u32 press_AQI[PRESS_SIZE];
+//unsigned char wait_send_press;
+//int press_len;
+//char press_buf[PRESS_SIZE][2];
+//u32 press_time_log[PRESS_SIZE];
+////u32 press_HCHO[PRESS_SIZE];
+//u32 press_C1[PRESS_SIZE];
+//u32 press_C2[PRESS_SIZE];
+//u32 press_AQI[PRESS_SIZE];
 
-BUTTON_T s_Powerkey;
-//是否有按键按下接口函数
-unsigned char  IsKeyDownUser(void)
+BUTTON_T s_Powerkey;	//power按键的结构体
+BUTTON_T s_Modekey;	//mode按键的结构体
+
+//是否有POWER按键按下接口函数
+unsigned char  IsKeyDownPower(void)
 {
-  if (0 == KEY0) return 1;
+  if (0 == KEY_POWER) return 1;
+  return 0;
+}
+
+//是否有MODE按键按下接口函数
+unsigned char  IsKeyDownMode(void)
+{
+  if (0 == KEY_MODE) return 1;
   return 0;
 }
 
@@ -33,8 +42,9 @@ void  PanakeyHard_Init(void)
 
 void  PanakeyVar_Init(void)
 {
-  /* 初始化USER按键变量，支持按下、弹起、长按 */
-  s_Powerkey.IsKeyDownFunc = IsKeyDownUser;                /* 判断按键按下的函数 */
+  /* 初始化POWER按键变量，支持按下、弹起、长按 */
+	s_Powerkey.key_type = KEY_TPYE_POWER;
+  s_Powerkey.IsKeyDownFunc = IsKeyDownPower;                /* 判断按键按下的函数 */
   s_Powerkey.FilterTime = BUTTON_FILTER_TIME;                /* 按键滤波时间 */
   s_Powerkey.LongTime = BUTTON_LONG_TIME;                        /* 长按时间 */
   s_Powerkey.Count = s_Powerkey.FilterTime / 2;                /* 计数器设置为滤波时间的一半 */
@@ -47,6 +57,22 @@ void  PanakeyVar_Init(void)
 	s_Powerkey.IsLong = 0;
 	s_Powerkey.timeout_flag = 0;
 	s_Powerkey.ChildLock_flag = 0;
+	
+	/* 初始化MODE按键变量，支持按下、弹起、长按 */
+	s_Modekey.key_type = KEY_TPYE_MODE;
+  s_Modekey.IsKeyDownFunc = IsKeyDownMode;                /* 判断按键按下的函数 */
+  s_Modekey.FilterTime = BUTTON_FILTER_TIME;                /* 按键滤波时间 */
+  s_Modekey.LongTime = BUTTON_LONG_TIME;                        /* 长按时间 */
+  s_Modekey.Count = s_Powerkey.FilterTime / 2;                /* 计数器设置为滤波时间的一半 */
+  s_Modekey.State = 0;                                                        /* 按键缺省状态，0为未按下 */
+  s_Modekey.KeyCodeDown = KEY_DOWN_Power;                        /* 按键按下的键值代码 */
+  s_Modekey.KeyCodeUp = KEY_UP_Power;                               /* 按键弹起的键值代码 */
+  s_Modekey.KeyCodeLong = KEY_LONG_Power;                        /* 按键被持续按下的键值代码 */
+  s_Modekey.RepeatSpeed = 0;                                                /* 按键连发的速度，0表示不支持连发 */
+  s_Modekey.RepeatCount = 0;                                                /* 连发计数器 */
+	s_Modekey.IsLong = 0;
+	s_Modekey.timeout_flag = 0;
+	s_Modekey.ChildLock_flag = 0;
 }
 
 void Panakey_Init(void)
@@ -55,78 +81,112 @@ void Panakey_Init(void)
   PanakeyVar_Init();                /* 初始化按键硬件 */
 }
 
-void SavePressLog(void)
+//void SavePressLog(void)
+//{
+//	int tmp_press_time = 0;
+//	
+//	//筛选在断网期间连续多次物理按键的情况，如果两次物理按键间隔不超过1S则最后一次的物理按键覆盖前一次的物理按键
+//	tmp_press_time = RTC_GetCounter();
+//	if(press_len > 0)
+//	{
+//		if((tmp_press_time - press_time_log[press_len-1]) <= 1)
+//		{
+//			press_len--;
+//		}
+//	}
+//	
+//	//if (Fifo_canPush(&recv_fifo1)) Fifo_Push(&recv_fifo1, *mqtt_mode);
+//	//将按下按键后的状态和按下按键的时间记录在下面的数组中
+//	if(All_State == sendPM) press_len = 0;
+//	else if(press_len >= PRESS_SIZE) press_len = PRESS_SIZE-1;	//当数组满的时候新的数据只替换末尾的一个数据
+//	strcpy(press_buf[press_len], mqtt_mode);
+//	press_time_log[press_len] = RTC_GetCounter();
+//	//press_HCHO[press_len] = Conce_HCHO;
+//	press_C1[press_len] = Conce_PM2_5;
+//	press_C2[press_len] = Conce_PM10;			
+//	press_AQI[press_len] = AQI_Max;			
+//	press_len++;
+//	wait_send_press = 1;
+//}
+
+void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 {
-	int tmp_press_time = 0;
-	
-	//筛选在断网期间连续多次物理按键的情况，如果两次物理按键间隔不超过1S则最后一次的物理按键覆盖前一次的物理按键
-	tmp_press_time = RTC_GetCounter();
-	if(press_len > 0)
+	if(key_type == KEY_TPYE_POWER)
 	{
-		if((tmp_press_time - press_time_log[press_len-1]) <= 1)
+		// 定义一个队列 放入按键值
+		if(KeyCode == KEY_DOWN_Power)
 		{
-			press_len--;
+			printf("POWER press!\r\n");
+		}
+		else if(KeyCode == KEY_UP_Power)
+		{
+			printf("POWER short press\r\n");
+			if(*mqtt_mode == '0')
+				strcpy(mqtt_mode,"A");
+			else
+				strcpy(mqtt_mode,"0");
+			ModeCountrol();
+//			SavePressLog();
+		}
+		else if(KeyCode == KEY_LONG_Power)
+		{
+			printf("POWER long press\r\n");
+//			strcpy(mqtt_mode, "0");
+//			ModeCountrol();
+//			SavePressLog();
+		}
+		else
+		{
+			printf("POWER KeyCode is error!\r\n");
 		}
 	}
-	
-	//if (Fifo_canPush(&recv_fifo1)) Fifo_Push(&recv_fifo1, *mqtt_mode);
-	//将按下按键后的状态和按下按键的时间记录在下面的数组中
-	if(All_State == sendPM) press_len = 0;
-	else if(press_len >= PRESS_SIZE) press_len = PRESS_SIZE-1;	//当数组满的时候新的数据只替换末尾的一个数据
-	strcpy(press_buf[press_len], mqtt_mode);
-	press_time_log[press_len] = RTC_GetCounter();
-	//press_HCHO[press_len] = Conce_HCHO;
-	press_C1[press_len] = Conce_PM2_5;
-	press_C2[press_len] = Conce_PM10;			
-	press_AQI[press_len] = AQI_Max;			
-	press_len++;
-	wait_send_press = 1;
-}
-
-void Pannelkey_Put(unsigned char KeyCode)
-{
-  // 定义一个队列 放入按键值
-	if(KeyCode == KEY_DOWN_Power)
-  {
-    printf("press!\r\n");
-  }
-  else if(KeyCode == KEY_UP_Power)
-  {
-		printf("short press\r\n");
-		switch(*mqtt_mode)
-		{
-			case '0':
-				strcpy(mqtt_mode,"A");
-				break;
-			case 'A':
-				strcpy(mqtt_mode,"1");
-				break;
-			case '1':
-				strcpy(mqtt_mode,"2");
-				break;
-			case '2':
-				strcpy(mqtt_mode,"3");
-				break;
-			case '3':
-				strcpy(mqtt_mode,"4");
-				break;
-			case '4':
-				strcpy(mqtt_mode,"A");
-				break;
-		}
-		ModeCountrol();
-		SavePressLog();
-  }
-  else if(KeyCode == KEY_LONG_Power)
-  {
-    printf("LONG PRESS\r\n");
-		strcpy(mqtt_mode, "0");
-		ModeCountrol();
-		SavePressLog();
-  }
-	else
+	else if(key_type == KEY_TPYE_MODE)
 	{
-		printf("KeyCode is error!\r\n");
+		// 定义一个队列 放入按键值
+		if(KeyCode == KEY_DOWN_Power)
+		{
+			printf("MODE press!\r\n");
+		}
+		else if(KeyCode == KEY_UP_Power)
+		{
+			printf("MODE short press\r\n");
+			switch(*mqtt_mode)
+			{
+				case 'A':
+					strcpy(mqtt_mode,"1");
+					ModeCountrol();
+					break;
+				case '1':
+					strcpy(mqtt_mode,"2");
+					ModeCountrol();
+					break;
+				case '2':
+					strcpy(mqtt_mode,"3");
+					ModeCountrol();
+					break;
+				case '3':
+					strcpy(mqtt_mode,"4");
+					ModeCountrol();
+					break;
+				case '4':
+					strcpy(mqtt_mode,"A");
+					ModeCountrol();
+					break;
+			}
+//			ModeCountrol();
+//			SavePressLog();
+		}
+		else if(KeyCode == KEY_LONG_Power)
+		{
+			printf("MODE long press\r\n");
+//			strcpy(mqtt_mode, "0");
+//			ModeCountrol();
+//			SavePressLog();
+		}
+		else
+		{
+			printf("MODE KeyCode is error!\r\n");
+		}
 	}
 }
 
@@ -160,7 +220,7 @@ void Button_Detect(BUTTON_T *_pBtn)
         if (_pBtn->KeyCodeDown > 0)
         {
           /* 键值放入按键FIFO */
-          Pannelkey_Put(_pBtn->KeyCodeDown);// 记录按键按下标志，等待释放
+          Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeDown);// 记录按键按下标志，等待释放
 
         }
       }
@@ -173,7 +233,7 @@ void Button_Detect(BUTTON_T *_pBtn)
           if (++_pBtn->LongCount == _pBtn->LongTime)
           {
             /* 键值放入按键FIFO */
-            Pannelkey_Put(_pBtn->KeyCodeLong);
+            Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeLong);
 						_pBtn->IsLong = 1;
           }
         }
@@ -185,7 +245,7 @@ void Button_Detect(BUTTON_T *_pBtn)
             {
               _pBtn->RepeatCount = 0;
               /* 常按键后，每隔10ms发送1个按键 */
-              Pannelkey_Put(_pBtn->KeyCodeDown);
+              Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeDown);
 
             }
           }
@@ -213,19 +273,21 @@ void Button_Detect(BUTTON_T *_pBtn)
         if (_pBtn->KeyCodeUp > 0) /*按键释放*/
         {
           /* 键值放入按键FIFO */
-					if(_pBtn->IsLong != 1) Pannelkey_Put(_pBtn->KeyCodeUp);
+					if(_pBtn->IsLong != 1) Pannelkey_Put(_pBtn->key_type, _pBtn->KeyCodeUp);
 					_pBtn->IsLong = 0;
         }
+				_pBtn->LongCount = 0;
+				_pBtn->RepeatCount = 0;
       }
     }
-
-    _pBtn->LongCount = 0;
-    _pBtn->RepeatCount = 0;
   }
 }
+
+
 //功能说明: 检测所有按键。10MS 调用一次
 void Pannelkey_Polling(void)
 {
-  Button_Detect(&s_Powerkey);                /* USER 键 */
+  Button_Detect(&s_Powerkey);                /* POWER 键 */
+	Button_Detect(&s_Modekey);                /* MODE 键 */
 }
 

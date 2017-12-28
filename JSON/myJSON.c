@@ -13,7 +13,7 @@
 void SendDataMode_group(cJSON *root);
 void ConnectionMode_group(cJSON *root);
 void NoPress_Connection_group(cJSON *root);
-void PressMode_group(cJSON *root);
+//void PressMode_group(cJSON *root);
 void GprsRecordMode_group(cJSON *root);
 
 //从外部引用到内部的
@@ -106,15 +106,15 @@ void ConnectionMode_group(cJSON *root)
 
   cJSON_AddItemToObject(root, "connection", j_connection = cJSON_CreateObject());
 
-  if(wait_send_press)
-  {
-    PressMode_group(j_connection);
-    wait_send_press = 0;
-  }
-  else
-  {
+//  if(wait_send_press)
+//  {
+//    PressMode_group(j_connection);
+//    wait_send_press = 0;
+//  }
+//  else
+//  {
     NoPress_Connection_group(j_connection);
-  }
+//  }
 }
 
 void NoPress_Connection_group(cJSON *root)
@@ -136,42 +136,42 @@ void NoPress_Connection_group(cJSON *root)
   cJSON_AddItemToArray(j_aqi, cJSON_CreateNumber(AQI_Max));
 }
 
-void PressMode_group(cJSON *root)
-{
-  int i;
-  cJSON *j_press = NULL;
-  cJSON *j_press_time = NULL;
-//	cJSON *j_hcho = NULL;
-  cJSON *j_c1 = NULL;
-  cJSON *j_c2 = NULL;
-  cJSON *j_aqi = NULL;
+//void PressMode_group(cJSON *root)
+//{
+//  int i;
+//  cJSON *j_press = NULL;
+//  cJSON *j_press_time = NULL;
+////	cJSON *j_hcho = NULL;
+//  cJSON *j_c1 = NULL;
+//  cJSON *j_c2 = NULL;
+//  cJSON *j_aqi = NULL;
 
-  cJSON_AddItemToObject(root, "press", j_press = cJSON_CreateArray());
-  cJSON_AddItemToObject(root, "time", j_press_time = cJSON_CreateArray());
-	//cJSON_AddItemToObject(root, "HCHO", j_hcho = cJSON_CreateArray());
-  cJSON_AddItemToObject(root, "C1", j_c1 = cJSON_CreateArray());
-  cJSON_AddItemToObject(root, "C2", j_c2 = cJSON_CreateArray());
-  cJSON_AddItemToObject(root, "AQI", j_aqi = cJSON_CreateArray());
-  for(i = 0; i < press_len; i++)
-  {
-    cJSON_AddItemToArray(j_press, cJSON_CreateString(press_buf[i]));
-//			count2date(press_time_log[i]);
-//			sprintf(somevalue, "%04d%02d%02d%02d%02d%02d\r\n", calendar_tmp.w_year, calendar_tmp.w_month, calendar_tmp.w_date, calendar_tmp.hour, calendar_tmp.min, calendar_tmp.sec);
-//			cJSON_AddItemToArray(press_time, cJSON_CreateString(somevalue));
-    cJSON_AddItemToArray(j_press_time, cJSON_CreateNumber(press_time_log[i]));
-		//cJSON_AddItemToArray(j_hcho, cJSON_CreateNumber(press_HCHO[i]));
-    cJSON_AddItemToArray(j_c1, cJSON_CreateNumber(press_C1[i]));
-    cJSON_AddItemToArray(j_c2, cJSON_CreateNumber(press_C2[i]));
-    cJSON_AddItemToArray(j_aqi, cJSON_CreateNumber(press_AQI[i]));
-  }
-  memset(press_buf, 0, sizeof(press_buf));	//每次发送完之后需要将数组清零
-  memset(press_time_log, 0, sizeof(press_time_log));	//每次发送完之后需要将数组清零
-	//memset(press_HCHO, 0, sizeof(press_HCHO));	//每次发送完之后需要将数组清零
-  memset(press_C1, 0, sizeof(press_C1));	//每次发送完之后需要将数组清零
-  memset(press_C2, 0, sizeof(press_C2));	//每次发送完之后需要将数组清零
-  memset(press_AQI, 0, sizeof(press_AQI));	//每次发送完之后需要将数组清零
-  press_len = 0;
-}
+//  cJSON_AddItemToObject(root, "press", j_press = cJSON_CreateArray());
+//  cJSON_AddItemToObject(root, "time", j_press_time = cJSON_CreateArray());
+//	//cJSON_AddItemToObject(root, "HCHO", j_hcho = cJSON_CreateArray());
+//  cJSON_AddItemToObject(root, "C1", j_c1 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(root, "C2", j_c2 = cJSON_CreateArray());
+//  cJSON_AddItemToObject(root, "AQI", j_aqi = cJSON_CreateArray());
+//  for(i = 0; i < press_len; i++)
+//  {
+//    cJSON_AddItemToArray(j_press, cJSON_CreateString(press_buf[i]));
+////			count2date(press_time_log[i]);
+////			sprintf(somevalue, "%04d%02d%02d%02d%02d%02d\r\n", calendar_tmp.w_year, calendar_tmp.w_month, calendar_tmp.w_date, calendar_tmp.hour, calendar_tmp.min, calendar_tmp.sec);
+////			cJSON_AddItemToArray(press_time, cJSON_CreateString(somevalue));
+//    cJSON_AddItemToArray(j_press_time, cJSON_CreateNumber(press_time_log[i]));
+//		//cJSON_AddItemToArray(j_hcho, cJSON_CreateNumber(press_HCHO[i]));
+//    cJSON_AddItemToArray(j_c1, cJSON_CreateNumber(press_C1[i]));
+//    cJSON_AddItemToArray(j_c2, cJSON_CreateNumber(press_C2[i]));
+//    cJSON_AddItemToArray(j_aqi, cJSON_CreateNumber(press_AQI[i]));
+//  }
+//  memset(press_buf, 0, sizeof(press_buf));	//每次发送完之后需要将数组清零
+//  memset(press_time_log, 0, sizeof(press_time_log));	//每次发送完之后需要将数组清零
+//	//memset(press_HCHO, 0, sizeof(press_HCHO));	//每次发送完之后需要将数组清零
+//  memset(press_C1, 0, sizeof(press_C1));	//每次发送完之后需要将数组清零
+//  memset(press_C2, 0, sizeof(press_C2));	//每次发送完之后需要将数组清零
+//  memset(press_AQI, 0, sizeof(press_AQI));	//每次发送完之后需要将数组清零
+//  press_len = 0;
+//}
 
 void GprsRecordMode_group(cJSON *root)
 {
@@ -209,9 +209,9 @@ void group_json(unsigned char mode)
     case SENDDATA_MODE:
       SendDataMode_group(root);
       break;
-    case PRESS_MODE:
-      PressMode_group(root);
-      break;
+//    case PRESS_MODE:
+//      PressMode_group(root);
+//      break;
     case GPRS_RECORD_MODE:
       GprsRecordMode_group(root);
       break;

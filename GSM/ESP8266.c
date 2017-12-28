@@ -696,7 +696,7 @@ void WIFI_restart(void)
 	
 int esp8266_send(const uint8_t *buffer, uint32_t len)
 {
-	printf("---------- sim800C_send len = %d ----------\r\n", len);
+	printf("---------- esp8266_send len = %d ----------\r\n", len);
   return sATCIPSENDSingle(buffer, len);
 }
 
@@ -715,7 +715,7 @@ int esp8266_recv(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
   }
 	if(len != 0)
 	{
-		printf("########## sim800C_recv len = %d ##########\r\n", len);
+		printf("########## esp8266_recv len = %d ##########\r\n", len);
 	}
   return len;
 }

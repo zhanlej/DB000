@@ -29,7 +29,7 @@
 #define LEVEL_OFFSET 10
 
 //LED
-#define SIGNAL_LED PBout(3)
+//#define SIGNAL_LED PBout(3)
 #define AUTO_LED PBout(5)
 #define SLEEP_LED PBout(6)
 #define SPEED1_LED PBout(7)

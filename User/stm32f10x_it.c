@@ -173,7 +173,7 @@ void TIM2_IRQHandler(void)
     timer1msINT();
 		
 		//add for 物理按键
-		if(sys_tick % 10 == 0 && !s_Powerkey.timeout_flag && !s_Powerkey.ChildLock_flag && !opencover_flag)	//每10ms检查一次
+		if(sys_tick % 10 == 0 && !s_Powerkey.ChildLock_flag)	//每10ms检查一次
 		{
 			Pannelkey_Polling();
 		}
