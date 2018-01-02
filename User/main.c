@@ -38,6 +38,8 @@
 //#include "DSHCHO.h"
 //add for PM2.5传感器
 #include "PMS7003.h"
+//add for OLED
+#include "24tft.h"
 
 //指针函数定义
 void (*trans_module_restart)(void);
@@ -72,8 +74,24 @@ unsigned char auto_flag = 0;
 unsigned char internal_flag = 0;
 unsigned char opencover_flag = 0; //是否打开后盖的全局标志
 
-int main()
+void GPIO_Config(void)
 {
+	GPIO_InitTypeDef GPIO_InitStructure;
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA, ENABLE);
+
+																	  //BL        //RS            CS          SCK          MISO         SDA    
+  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;       
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	
+//	GPIO_SetBits(GPIOA, GPIO_Pin_2);
+// 	GPIO_SetBits(GPIOC, GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5);	 // turn off all led
+}
+
+int main()
+{	
 	__enable_irq(); //使能所有中断
 	
 	delay_init();	//延时函数初始化
@@ -82,7 +100,7 @@ int main()
   NVIC_Configuration(); //中断源配置
   GPIO_Configuration(); //io配置
 
-	RGB_Set(CUTDOWN, 4);	//关闭空气质量灯
+	RGB_Set(WS2812B_CUTDOWN, 4);	//关闭空气质量灯
 
   UartBegin(115200, &TRANS_USART, &U1_PutChar);				//串口1配置
 	USART2Conf(9600, 0, 1);      //串口2配置
@@ -110,6 +128,19 @@ int main()
 	//往FLASH_FIRMWARE_FLAG地址写1表示APP程序正常运行
 	if(Flash_Read_Number(FLASH_FIRMWARE_FLAG) != 1) Flash_Write_Number(1, FLASH_FIRMWARE_FLAG);
 	
+	/* LED 端口初始化 */
+	GPIO_Config();
+	
+	ILI9325_CMO24_Initial();
+	
+	SPILCD_Clear(0x00);
+
+	LCD_PutString(0,0,"好钜润科技 OLED");
+	LCD_PutString(0,20,"1.2寸 OLED"); 
+	LCD_PutString(0,40,"电话：0755-");
+	LCD_PutString(0,60,"33561760");
+	LCD_PutString(0,80,"Hello world!");
+  while (1);
 
 
   while(1)
@@ -1115,35 +1146,35 @@ void AirLEDControl(void)
 {
 	if(PM2_5_OK == 0)
 	{
-		RGB_Set(WHITE, 4);
+		RGB_Set(WS2812B_WHITE, 4);
 		return;	//如果判断pm2.5传感器没正常工作，就让空气质量灯显示白色，并跳出该函数
 	}
 	if(*mqtt_mode == '0' || *mqtt_mode == '1')
 	{
-		RGB_Set(CUTDOWN, 4);
+		RGB_Set(WS2812B_CUTDOWN, 4);
 		//printf("sleep mode close the airled!\r\n");
 	}
 	else if(AQI_Max <= PM2_5_LEVEL1)
 	{
 		//WS2812_send(colors[4], 4);
-		RGB_Set(GREEN, 4);
+		RGB_Set(WS2812B_GREEN, 4);
 		//printf("GREEN\r\n");
 	}
 	else if(AQI_Max > PM2_5_LEVEL1 && AQI_Max <= PM2_5_LEVEL2)
 	{
 		//WS2812_send(colors[1], 4);
-		RGB_Set(ORANGE, 4);
+		RGB_Set(WS2812B_ORANGE, 4);
 		//printf("ORANGE\r\n");
 	}
 	else if(AQI_Max > PM2_5_LEVEL2)
 	{
 		//WS2812_send(colors[0], 4);
-		RGB_Set(RED, 4);
+		RGB_Set(WS2812B_RED, 4);
 		//printf("RED\r\n");
 	}
 	else
 	{
-		RGB_Set(WHITE, 4);
+		RGB_Set(WS2812B_WHITE, 4);
 		printf("airled control is error!\r\n");
 	}
 }

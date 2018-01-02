@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,DEBUG_ENABLE_SEMIHOST,TRANS_WIFI</Define>
               <Undefine></Undefine>
-              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer;.\User\DSHCHO;.\User\PMS7003</IncludePath>
+              <IncludePath>.\CMSIS;.\Lib\inc;.\Lib\src;.\User;.\Startup;.\MCULIB;.\MQTT;.\GSM;.\JSON;.\SYSTEM;.\User\RTC;.\User\ws2812;.\User\KEY;.\User\STMFLASH;.\User\buzzer;.\User\DSHCHO;.\User\PMS7003;.\User\OLED</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -503,6 +503,11 @@
               <FileName>PMS7003.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\User\PMS7003\PMS7003.c</FilePath>
+            </File>
+            <File>
+              <FileName>24tft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\OLED\24tft.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,7 +10,7 @@
 #define LED_RESET       GPIO_ResetBits(LED_GPIO , LED_PIN)
 
 //void delay_init(void);
-void Delayms(u32 Nms);
+//void Delayms(u32 Nms);
 void Delay_us(u32 Nus);
 void LEDToggle(uint16_t Led);
 
