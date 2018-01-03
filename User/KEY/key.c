@@ -169,7 +169,7 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		}
 	}
 	
-	//只有两个按键都长按才能出发组合键
+	//只有两个按键都长按才能触发组合键
 	if(KeyCode == KEY_LONG_Power && s_Powerkey.IsLong == 1 && s_Modekey.IsLong == 1)
 	{
 		//设置组合键的flag

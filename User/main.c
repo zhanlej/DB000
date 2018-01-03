@@ -183,7 +183,6 @@ int main()
 					Transmission_State();
 					break;
 				default:
-					LedCountrol(0x0);
 					break;
 			}
 		}
@@ -243,57 +242,31 @@ void GPIO_Configuration(void)
 	// 改变指定管脚的映射 GPIO_Remap_SWJ_JTAGDisable ，JTAG-DP 禁用 + SW-DP 使能
 #endif
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;     //物理按键开关机--PB3
+	/*   物理按键   */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;     //物理按键开关机--PB8
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  //GPIO_SetBits(GPIOB, GPIO_Pin_3);
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;     //物理按键模式切换--PB4
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;     //物理按键模式切换--PB9
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  //GPIO_SetBits(GPIOB, GPIO_Pin_14);
+	/*   物理按键   */
+	
+	/*   蜂鸣器   */
+	//在beep_init()中配置
+  //BUZZER_PIN_F为PB11
+	//BUZZER_PIN_V为PB12
+	/*   蜂鸣器   */
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;     //LED1控制--PB5
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_5);
-
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;     //LED2控制--PB6
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_6);
-
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;     //LED3控制--PB7
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_7);
-
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;     //LED4控制--PB8
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_8);
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;			//LED5控制--PB1
-	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;			//复用输出
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出	
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	GPIO_SetBits(GPIOB, GPIO_Pin_9);
-
+	/*   空气质量灯   */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;     //2空气质量灯
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 	GPIO_ResetBits(GPIOB, GPIO_Pin_12);
+	/*   空气质量灯   */
 
-//  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;     //蜂鸣器
-//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
-//  GPIO_Init(GPIOB, &GPIO_InitStructure);
-//  GPIO_SetBits(GPIOB, GPIO_Pin_13);
-
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //A0
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-
+	/*   风机继电器   */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;     //A4
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
@@ -309,7 +282,9 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;     //A7
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+	/*   风机继电器   */
 
+	/*   联网传输模块   */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;     //GPRS模块POWERKEY 或者 WIFI模块的RST
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
   GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -329,22 +304,24 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;   //USART1 RX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  //浮空输入
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+	/*   联网传输模块   */
 
+	/*   PM2.5传感器   */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2; //USART2 TX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;      //复用推挽输出
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-//	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;     //A2
-//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
-//  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;      //USART2 RX
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;   //浮空输入
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+	/*   PM2.5传感器   */
 
+	/*   调试串口   */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;//USART3 TX
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;//设置最高速度50MHz
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;//推挽复用输出
   GPIO_Init(GPIOB, &GPIO_InitStructure); //将初始化好的结构体装入寄存器
+	/*   调试串口   */
 
 }
 
@@ -996,7 +973,6 @@ void FanTest(char * fan_test)
 	}
 	printf("fan_tmp = %d, fan_test = %s\r\n", fan_tmp, fan_test);
 	SetMotorLevel(fan_tmp);
-	LedCountrol(fan_tmp);
 }
 
 void ModeCountrol(void)
@@ -1005,7 +981,6 @@ void ModeCountrol(void)
   {		
 		fan_level = 0;
     MotorCountrol(0); //关闭风机
-    LedCountrol(0x0);
   }
   else if((*mqtt_mode > '0' && *mqtt_mode <= '9') || (*mqtt_mode == 'A'))
   {
@@ -1021,7 +996,6 @@ void ModeCountrol(void)
       }
 
       MotorCountrol(fan_level);
-      LedCountrol(0x1);
     }
     else    //控制模式
     {
@@ -1049,26 +1023,11 @@ void ModeCountrol(void)
       }
 
       MotorCountrol(fan_level);
-      LedCountrol(1 << (fan_level));
     }
   }
 	
 	//如果是在待机状态或睡眠模式下关闭空气质量灯
 	AirLEDControl();
-}
-
-void LedCountrol(unsigned short mode)
-{
-	if(*mqtt_mode == '0')
-		beep_on(BEEP_OFF);
-	else
-		beep_on(BEEP_CMD);
-	
-	AUTO_LED = (~(mode >> 0) & 1);
-	SLEEP_LED = (~(mode >> 1) & 1);
-	SPEED1_LED = (~(mode >> 2) & 1);
-	SPEED2_LED = (~(mode >> 3) & 1);
-	SPEED3_LED = (~(mode >> 4) & 1);
 }
 
 void SetMotorLevel(int cmd)

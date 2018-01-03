@@ -5,8 +5,8 @@
  */
 #define BUTTON_FILTER_TIME         5
 #define BUTTON_LONG_TIME         200                /* 持续2秒，认为长按事件 */
-#define KEY_POWER GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_3)
-#define KEY_MODE GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_4)
+#define KEY_POWER GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_8)
+#define KEY_MODE GPIO_ReadInputDataBit(GPIOB,GPIO_Pin_9)
 #define PRESS_SIZE 20
 
 typedef enum

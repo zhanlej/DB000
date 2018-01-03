@@ -5,8 +5,10 @@
 #include "sys.h"
 
 /* #####   EXPORTED MACROS   ######################################################## */
-#define BUZZER_PIN_F PAout(8)
+#define BUZZER_PIN_F PAout(11)
 #define BUZZER_PIN_V PAout(12)
+#define BUZZER_V_OFF 0
+#define BUZZER_V_ON 1
 #define BEEP_TIME 200
 //#define ACTIVE_BEEP 1
 
