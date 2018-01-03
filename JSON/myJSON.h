@@ -22,7 +22,7 @@
 //#define AUTOMODE_INTERVAL 5
 
 //断网测试记录
-#define GPRS_STATE_TIME_SIZE 50
+#define GPRS_STATE_TIME_SIZE 5
 
 
 //从内部引用到外部的

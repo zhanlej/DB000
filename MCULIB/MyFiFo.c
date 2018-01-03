@@ -12,6 +12,8 @@ struct Fifo send_fifo3;
 struct Fifo send_fifo4;
 struct Fifo send_fifo5;
 
+char inner_recvbuffer1[1];
+char inner_recvbuffer3[recvbufLen];
 
 void Fifo_Init(struct Fifo* f, int length_, char* head_) {
 	(f->read) = (f->write) = (f->head) = head_;
@@ -46,10 +48,6 @@ void Fifo_PushList(struct Fifo* f, const char* s, int length) {
 		Fifo_Push(f, *s);
 	}
 }
-
-char inner_recvbuffer1[1];
-char inner_recvbuffer3[recvbufLen];
-
 
 void Fifo_All_Initialize(void) {
 	Fifo_Init(&recv_fifo1, recvbufLen, inner_recvbuffer1); 

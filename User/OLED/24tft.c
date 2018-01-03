@@ -1,6 +1,9 @@
+#include "stdio.h"
 #include "24tft.h"
 #include "ASCII.h"
 #include "GB1616.h"	//16*16汉字字模
+#include "oled_number.h"
+#include "oled_picture.h"
 
 #define SPILCD_W 176
 #define SPILCD_H 240
@@ -372,6 +375,161 @@ void LCD_PutString(unsigned char x, unsigned char y, unsigned char *s)
 				}
 		}
 }
+
+void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_TYPE_ENUM type)
+{       
+	unsigned char temp;
+	unsigned int pos,t,i;  
+	unsigned char width, high;
+	unsigned int size = 0;
+	
+	if(type == NUM_40_64)
+	{
+		width = 40;
+		high = 64;
+	}
+	else if(type == NUM_16_32)
+	{
+		width = 16;
+		high = 32;
+	}
+	
+	size = (high/8)*width;
+	
+  WriteComm(0x15);//SET COLUMN ADDR 
+	WriteComm(x); 
+	WriteComm(x+((width/2)-1)); 
+	WriteComm(0x75);//SET ROW ADDR 
+	WriteComm(0x0+y); 
+	WriteComm(0x0+y+high-1); 
+	lcd_RS(1);
+	SPI_CS(0);  
+	//num=num-'0';//得到偏移后的值
+	i=num*size;
+
+	if(type == NUM_40_64)
+	{
+		for(pos=0;pos<size;pos++)
+		{
+			temp=NumberDot4060[i+pos];	//调通调用艺术字体
+			for(t=0;t<8;t++)
+			{                 
+				if(temp&0x80)
+					LCD_WriteoneSPI(0xff);
+				else 
+					LCD_WriteoneSPI(0x00);
+				temp<<=1; 
+			}
+		}
+	}
+	else if(type == NUM_16_32)
+	{
+		for(pos=0;pos<size;pos++)
+		{
+			temp=NumberDot1632[i+pos];	//调通调用艺术字体
+			for(t=0;t<8;t++)
+			{                 
+				if(temp&0x80)
+					LCD_WriteoneSPI(0xff);
+				else 
+					LCD_WriteoneSPI(0x00);
+				temp<<=1; 
+			}
+		}
+	}
+}  
+
+void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_ENUM type) 
+{
+	unsigned char l=0;
+	unsigned char i=0;
+	unsigned char temp[3];
+	unsigned char width;
+	
+	if(number > 999)						//最大显示数值为999
+		number = 999;
+	
+	if(type == NUM_40_64)
+		width = 20;
+	else if(type == NUM_16_32)
+		width = 8;
+	
+	temp[0] = number/100%10;
+	temp[1] = number/10%10;
+	temp[2] = number%10;
+	
+	for(i = 0; i < 3; i++)
+	{
+		SPILCD_ShowNum(x+l, y, temp[i], type);
+		l += width;
+	}
+}
+
+void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM picture, OLED_PICTURE_TYPE_ENUM type)
+{       
+	unsigned char temp;
+	unsigned int pos,t,i;  
+	unsigned char width, high;
+	unsigned int size = 0;
+	
+	printf("picture = %d, type = %d\r\n", picture, type);
+	
+	if(type == PICTURE_16_32)
+	{
+		width = 16;
+		high = 32;
+	}
+	else if(type == PICTURE_32_32)
+	{
+		width = 32;
+		high = 32;
+	}
+	
+	size = (high/8)*width;
+	
+  WriteComm(0x15);//SET COLUMN ADDR 
+	WriteComm(x); 
+	WriteComm(x+((width/2)-1)); 
+	WriteComm(0x75);//SET ROW ADDR 
+	WriteComm(0x0+y); 
+	WriteComm(0x0+y+high-1); 
+	lcd_RS(1);
+	SPI_CS(0);  
+	//num=num-'0';//得到偏移后的值
+	i=picture*size;
+
+	if(type == PICTURE_16_32)
+	{
+		for(pos=0;pos<size;pos++)
+		{
+			temp=PictureDot1632[i+pos];	//调通调用艺术字体
+			for(t=0;t<8;t++)
+			{                 
+				if(temp&0x80)
+					LCD_WriteoneSPI(0xff);
+				else 
+					LCD_WriteoneSPI(0x00);
+				temp<<=1; 
+			}
+		}
+	}
+	else if(type == PICTURE_32_32)
+	{
+		for(pos=0;pos<size;pos++)
+		{
+			temp=PictureDot3232[i+pos];	//调通调用艺术字体
+			for(t=0;t<8;t++)
+			{                 
+				if(temp&0x80)
+					LCD_WriteoneSPI(0xff);
+				else 
+					LCD_WriteoneSPI(0x00);
+				temp<<=1; 
+			}
+		}
+	}
+}
+
 /******************************************
 函数名：Lcd图像填充100*100
 功能：向Lcd指定位置填充图像
@@ -380,7 +538,7 @@ void LCD_PutString(unsigned char x, unsigned char y, unsigned char *s)
 void LCD_Fill_Pic(u16 x, u16 y,u16 pic_H, u16 pic_V, const unsigned char* pic)
 {
   unsigned long i;
-	unsigned int j;
+//	unsigned int j;
 	SPILCD_SetWindow(x,x+pic_H-1,y,y+pic_V-1);
 
 // 	lcd_RS(1);
@@ -391,3 +549,4 @@ void LCD_Fill_Pic(u16 x, u16 y,u16 pic_H, u16 pic_V, const unsigned char* pic)
 // 	SPILCD_SetWindow(0,319,0,239);//写完图片后恢复整个显示区域
 
 }
+

@@ -20,7 +20,7 @@ void GprsRecordMode_group(cJSON *root);
 extern volatile int Conce_PM2_5;       // PM2.5Å¨¶È
 extern volatile int Conce_PM10;        // PM10Å¨¶È
 extern volatile int AQI_Max;
-extern char http_buf[512];
+extern char http_buf[1];
 extern unsigned int current_interval;
 extern char mqtt_mode[2];
 extern volatile unsigned char fan_level;

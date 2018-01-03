@@ -57,7 +57,7 @@ volatile unsigned char fan_level = 0; //自动模式下的速度档位
 
 
 CONNECT_STATUS_ENUM All_State = initialWAITOK;
-char http_buf[512];	//GPRS模块通过http协议获取的数据
+char http_buf[1];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
 char deviceID[20] = "200025";
 MQTTString topicString = MQTTString_initializer;
@@ -74,74 +74,44 @@ unsigned char auto_flag = 0;
 unsigned char internal_flag = 0;
 unsigned char opencover_flag = 0; //是否打开后盖的全局标志
 
-void GPIO_Config(void)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA, ENABLE);
-
-																	  //BL        //RS            CS          SCK          MISO         SDA    
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;	
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;       
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-	
-//	GPIO_SetBits(GPIOA, GPIO_Pin_2);
-// 	GPIO_SetBits(GPIOC, GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5);	 // turn off all led
-}
-
 int main()
-{	
-	__enable_irq(); //使能所有中断
-	
-	delay_init();	//延时函数初始化
+{		
+	delay_init();						//延时函数初始化
   Fifo_All_Initialize();	//fifo初始化
-  RCC_Configuration(); //时钟配置
-  NVIC_Configuration(); //中断源配置
-  GPIO_Configuration(); //io配置
-
-	RGB_Set(WS2812B_CUTDOWN, 4);	//关闭空气质量灯
+  RCC_Configuration(); 		//时钟配置
+  NVIC_Configuration(); 	//中断源配置
+  GPIO_Configuration(); 	//io配置
 
   UartBegin(115200, &TRANS_USART, &U1_PutChar);				//串口1配置
-	USART2Conf(9600, 0, 1);      //串口2配置
-  USART3Conf(9600, 1, 1);		//串口3配置
+	USART2Conf(9600, 0, 1);  												    //串口2配置
+  USART3Conf(9600, 1, 1);															//串口3配置
 	//DSHCHO_Init(115200, &USART3Conf, &U3_PutChar);
-  TIM2_Init();					//每1ms中断一次的定时器，用来记录时间
 #ifndef ACTIVE_BEEP
-	TIM1_Int_Init();			//打开定时器TIM1，产生无源蜂鸣器的PWM
+	TIM1_Int_Init();								//打开定时器TIM1，产生无源蜂鸣器的PWM
 #endif
-	TIM3_Int_Init(9999, 7199);	//打开定时器，指定时间发送传感器数据到服务器
-	beep_init();						//蜂鸣器初始化
-	//EXTIX_Init();					//物理按键外部中断初始化
-	Panakey_Init();					//物理按键外部中断初始化
-	RTC_Init(2017, 1, 1, 0, 0, 0);						//实时时钟初始化，用来限制用户超过租期不能使用。
-	//Timer4_init();	//TIM+DMA方式控制空气质量灯
+  TIM2_Init();										//每1ms中断一次的定时器，用来记录时间
+	TIM3_Int_Init(9999, 7199);			//打开定时器，指定时间发送传感器数据到服务器
+	
+	beep_init();										//蜂鸣器初始化
+	Panakey_Init();									//物理按键外部中断初始化
+	RTC_Init(2017, 1, 1, 0, 0, 0);	//实时时钟初始化，用来限制用户超过租期不能使用。
+	ILI9325_CMO24_Initial();				//OLED模块初始化代码
 
+	RGB_Set(WS2812B_CUTDOWN, 4);		//关闭空气质量灯
+	SPILCD_Clear(0x00);							//OLED清屏
+	beep_on(BEEP_ON);								//蜂鸣器开机
+	
 	delay_ms(1000);
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
-	beep_on(BEEP_ON);
-	
-	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);
-	printf("U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x\r\n", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);
-	
-	//往FLASH_FIRMWARE_FLAG地址写1表示APP程序正常运行
-	if(Flash_Read_Number(FLASH_FIRMWARE_FLAG) != 1) Flash_Write_Number(1, FLASH_FIRMWARE_FLAG);
-	
-	/* LED 端口初始化 */
-	GPIO_Config();
-	
-	ILI9325_CMO24_Initial();
-	
-	SPILCD_Clear(0x00);
+	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);	//读取MCU_ID号
+	printf("U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x\r\n", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);		
 
-	LCD_PutString(0,0,"好钜润科技 OLED");
-	LCD_PutString(0,20,"1.2寸 OLED"); 
-	LCD_PutString(0,40,"电话：0755-");
-	LCD_PutString(0,60,"33561760");
-	LCD_PutString(0,80,"Hello world!");
-  while (1);
-
+	LCD_PutNumber(2,0,345,NUM_40_64);
+	LCD_PutNumber(0,64,123,NUM_16_32);
+	SPILCD_ShowPicture(24,64,OLED_AIR_VOLUM,PICTURE_16_32);
+	SPILCD_ShowPicture(32,64,OLED_WIFI_OK,PICTURE_32_32);
+	SPILCD_ShowPicture(48,64,OLED_AUTO_MODE,PICTURE_32_32);
 
   while(1)
   {
@@ -241,6 +211,14 @@ void GPIO_Configuration(void)
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable , ENABLE);
 	// 改变指定管脚的映射 GPIO_Remap_SWJ_JTAGDisable ，JTAG-DP 禁用 + SW-DP 使能
 #endif
+
+	/*   OLED显示屏   */
+																   //RS            CS          SCK           SDA    
+  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_13 | GPIO_Pin_15;	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;       
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+	/*   OLED显示屏   */
 	
 	/*   物理按键   */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;     //物理按键开关机--PB8
