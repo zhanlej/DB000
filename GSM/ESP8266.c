@@ -10,6 +10,7 @@
 #include "stringAPIext.h"
 #include "uart.h"
 #include "MyFifo.h"
+#include "24tft.h"					//for OLED
 
 volatile unsigned long sys_tick = 0;
 unsigned char smartconfig_flag = 0;
@@ -140,15 +141,20 @@ int WifiInit(const char *addr, uint32_t port, char *http_data)
 	
 	if(smartconfig_flag)
 	{
+		OLED_display.ui_type = UI_WIFI_CONFIG;	//OLED切换到正在配网界面
+		OLED_display_handle();									//OLED屏幕显示函数
 		smartconfig_flag = 0;
 		if(!SmartConfig()) return 0;
 		printf("SmartConfig() ok!\r\n");
 	}
 	else
 	{
+		OLED_display.ui_type = UI_CONNECTING;		//OLED切换到尝试连接界面
+		OLED_display_handle();									//OLED屏幕显示函数
 		if(!AutoLink()) return 0;
 		printf("AutoLink() ok!\r\n");
 	}
+	OLED_display.ui_type = UI_MAIN;	//OLED切换到主界面
 
   if(!disableMUX()) return 0;
 	printf("disableMUX() ok!\r\n");

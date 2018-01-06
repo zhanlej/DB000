@@ -95,26 +95,25 @@ int main()
 	beep_init();										//蜂鸣器初始化
 	Panakey_Init();									//物理按键外部中断初始化
 	RTC_Init(2017, 1, 1, 0, 0, 0);	//实时时钟初始化，用来限制用户超过租期不能使用。
-	ILI9325_CMO24_Initial();				//OLED模块初始化代码
+	OLED_init();										//OLED模块初始化
 
 	RGB_Set(WS2812B_CUTDOWN, 4);		//关闭空气质量灯
 	SPILCD_Clear(0x00);							//OLED清屏
 	beep_on(BEEP_ON);								//蜂鸣器开机
 	
-	delay_ms(1000);
+	OLED_display_handle();					//OLED屏幕显示函数
+	OLED_display.ui_type = UI_MAIN;	//OLED切换到主界面
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);	//读取MCU_ID号
 	printf("U_ID = %.4x-%.4x-%.4x-%.4x-%.4x-%.4x\r\n", U_ID[5],U_ID[4],U_ID[3],U_ID[2],U_ID[1],U_ID[0]);		
-
-	LCD_PutNumber(2,0,345,NUM_40_64);
-	LCD_PutNumber(0,64,123,NUM_16_32);
-	SPILCD_ShowPicture(24,64,OLED_AIR_VOLUM,PICTURE_16_32);
-	SPILCD_ShowPicture(32,64,OLED_WIFI_OK,PICTURE_32_32);
-	SPILCD_ShowPicture(48,64,OLED_AUTO_MODE,PICTURE_32_32);
+	
+	delay_ms(1000);
 
   while(1)
   {
+		OLED_display_handle();					//OLED屏幕显示函数
+		
 		if(auto_flag == 1)
 		{
 			if(*mqtt_mode == 'A')
@@ -376,8 +375,8 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 void restart_MCU(void)
 {
   trans_module_restart();
-	All_State = initialWAITOK;
-	return;
+	All_State = DISCNNECT;
+	OLED_display.ui_main.wifi_status = OLED_WIFI_FAIL;
 }
 
 void Initial_trans_module()
@@ -389,11 +388,12 @@ void Initial_trans_module()
 	{
 		printf("trans_module_init is OK!");
 		All_State = initialTCP;
+		OLED_display.ui_main.wifi_status = OLED_WIFI_OK;
 	}
 	else
 	{
 		printf("trans_module_init is FAIL!");
-		All_State = DISCNNECT;
+		restart_MCU();
 	}
 }
 

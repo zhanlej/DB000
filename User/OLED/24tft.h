@@ -3,30 +3,6 @@
 
 #include "sys.h"
 
-typedef enum
-{
-	NUM_40_64,
-	NUM_16_32,
-} OLED_NUM_TYPE_ENUM;
-
-typedef enum
-{
-	PICTURE_16_32,
-	PICTURE_32_32,
-} OLED_PICTURE_TYPE_ENUM;
-
-typedef enum
-{
-	OLED_WIFI_OK,
-	OLED_WIFI_FAIL,
-	OLED_AUTO_MODE,
-	OLED_SLEEP_MODE,
-	OLED_SPEED1_MODE,
-	OLED_SPEED2_MODE,
-	OLED_SPEED3_MODE,
-	
-	OLED_AIR_VOLUM = 0,
-} OLED_PICTURE_ENUM;
 
 #define lcd_RS(a)	\
 						if (a)	\
@@ -49,7 +25,6 @@ typedef enum
 						else		\
 						GPIOB->BRR = GPIO_Pin_15;
 
-
 #define WHITE						0xFFFF
 #define BLACK						0x0000	  
 #define BLUE						0x001F  
@@ -65,7 +40,67 @@ typedef enum
 #define BRRED						0XFC07 //棕红色
 #define GRAY						0X8430 //灰色
 
-void ILI9325_CMO24_Initial(void);
+#define OLED_LIGHT_TIME 60				//OLED亮屏时间，单位为秒
+#define OLED_SWITCH_TIME 2				//OLED切换屏幕时间，单位为秒
+
+						
+typedef enum
+{
+	NUM_40_64,
+	NUM_16_32,
+} OLED_NUM_TYPE_ENUM;	//OLED显示数字的尺寸
+
+typedef enum
+{
+	PICTURE_16_32,
+	PICTURE_32_32,
+} OLED_PICTURE_TYPE_ENUM;	//OLED显示图片的尺寸
+
+typedef enum
+{
+	OLED_WIFI_OK,
+	OLED_WIFI_FAIL,
+	OLED_AUTO_MODE,
+	OLED_SLEEP_MODE,
+	OLED_SPEED1_MODE,
+	OLED_SPEED2_MODE,
+	OLED_SPEED3_MODE,
+	
+	OLED_AIR_VOLUM = 0,
+} OLED_PICTURE_ENUM;	//OLED显示图片的类型
+
+typedef enum
+{
+	UI_MAIN,
+	UI_WELCOME,
+	UI_CONNECTING,
+	UI_WIFI_CONFIG,
+	UI_MODE,
+} OLED_UI_ENUM;					//OLED显示界面的类型
+
+typedef struct
+{
+	unsigned int pm2_5;
+	unsigned int air_volum;
+	OLED_PICTURE_ENUM wifi_status;
+	OLED_PICTURE_ENUM mode;
+} ui_main_t;						//主菜单的结构体
+
+typedef struct
+{
+	OLED_UI_ENUM ui_type;							//显示的界面
+	unsigned char screen_light;		//是否亮屏
+	unsigned int light_time;			//亮屏时间，单位为秒
+	unsigned int switch_time;			//屏幕切换时间，单位为秒
+	ui_main_t ui_main;						//主菜单显示的内容
+} OLED_display_t;								//OLED显示的结构体
+
+
+extern OLED_display_t OLED_display;
+
+
+void OLED_init(void);
+void OLED_display_handle(void);
 void Delayms(unsigned short time);
 void LCD_WriteRegIndex(unsigned char Index);
 void LCD_WriteData(unsigned short dat);

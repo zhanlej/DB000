@@ -8,6 +8,10 @@
 #define SPILCD_W 176
 #define SPILCD_H 240
 
+void ILI9325_CMO24_Initial(void);	//OLED模块初始化代码
+void OLED_display_init(void);			//OLED结构体初始化
+
+OLED_display_t OLED_display;
 
 void Delayms(unsigned short time)
 {
@@ -376,10 +380,28 @@ void LCD_PutString(unsigned char x, unsigned char y, unsigned char *s)
 		}
 }
 
+void SPILCD_WriteArray(unsigned int start, unsigned int size, const unsigned char * array)
+{
+	int pos, t;
+	unsigned char temp;
+	
+	for(pos=0;pos<size;pos++)
+	{
+		temp=array[start+pos];	//调通调用艺术字体
+		for(t=0;t<8;t++)
+		{                 
+			if(temp&0x80)
+				LCD_WriteoneSPI(0xff);
+			else 
+				LCD_WriteoneSPI(0x00);
+			temp<<=1; 
+		}
+	}
+}
+
 void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_TYPE_ENUM type)
 {       
-	unsigned char temp;
-	unsigned int pos,t,i;  
+	unsigned int i;  
 	unsigned char width, high;
 	unsigned int size = 0;
 	
@@ -409,33 +431,11 @@ void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_
 
 	if(type == NUM_40_64)
 	{
-		for(pos=0;pos<size;pos++)
-		{
-			temp=NumberDot4060[i+pos];	//调通调用艺术字体
-			for(t=0;t<8;t++)
-			{                 
-				if(temp&0x80)
-					LCD_WriteoneSPI(0xff);
-				else 
-					LCD_WriteoneSPI(0x00);
-				temp<<=1; 
-			}
-		}
+		SPILCD_WriteArray(i, size, NumberDot4060);
 	}
 	else if(type == NUM_16_32)
 	{
-		for(pos=0;pos<size;pos++)
-		{
-			temp=NumberDot1632[i+pos];	//调通调用艺术字体
-			for(t=0;t<8;t++)
-			{                 
-				if(temp&0x80)
-					LCD_WriteoneSPI(0xff);
-				else 
-					LCD_WriteoneSPI(0x00);
-				temp<<=1; 
-			}
-		}
+		SPILCD_WriteArray(i, size, NumberDot1632);
 	}
 }  
 
@@ -467,12 +467,9 @@ void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_E
 
 void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM picture, OLED_PICTURE_TYPE_ENUM type)
 {       
-	unsigned char temp;
-	unsigned int pos,t,i;  
+	unsigned int i;  
 	unsigned char width, high;
 	unsigned int size = 0;
-	
-	printf("picture = %d, type = %d\r\n", picture, type);
 	
 	if(type == PICTURE_16_32)
 	{
@@ -500,33 +497,11 @@ void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM pictur
 
 	if(type == PICTURE_16_32)
 	{
-		for(pos=0;pos<size;pos++)
-		{
-			temp=PictureDot1632[i+pos];	//调通调用艺术字体
-			for(t=0;t<8;t++)
-			{                 
-				if(temp&0x80)
-					LCD_WriteoneSPI(0xff);
-				else 
-					LCD_WriteoneSPI(0x00);
-				temp<<=1; 
-			}
-		}
+		SPILCD_WriteArray(i, size, PictureDot1632);
 	}
 	else if(type == PICTURE_32_32)
 	{
-		for(pos=0;pos<size;pos++)
-		{
-			temp=PictureDot3232[i+pos];	//调通调用艺术字体
-			for(t=0;t<8;t++)
-			{                 
-				if(temp&0x80)
-					LCD_WriteoneSPI(0xff);
-				else 
-					LCD_WriteoneSPI(0x00);
-				temp<<=1; 
-			}
-		}
+		SPILCD_WriteArray(i, size, PictureDot3232);
 	}
 }
 
@@ -548,5 +523,51 @@ void LCD_Fill_Pic(u16 x, u16 y,u16 pic_H, u16 pic_V, const unsigned char* pic)
 	}
 // 	SPILCD_SetWindow(0,319,0,239);//写完图片后恢复整个显示区域
 
+}
+
+void OLED_init(void)
+{
+	//GPIO初始化在main函数中
+	ILI9325_CMO24_Initial();				//OLED模块初始化代码
+	OLED_display_init();
+}
+
+void OLED_display_init(void)
+{
+	OLED_display.ui_type = UI_WELCOME;
+	OLED_display.screen_light = 1;
+	OLED_display.light_time = OLED_LIGHT_TIME;
+	OLED_display.switch_time = OLED_SWITCH_TIME;
+	OLED_display.ui_main.pm2_5 = 0;
+	OLED_display.ui_main.air_volum = 0;
+	OLED_display.ui_main.wifi_status = OLED_WIFI_FAIL;
+	OLED_display.ui_main.mode = OLED_AUTO_MODE;
+}
+
+void OLED_display_handle(void)
+{
+	switch(OLED_display.ui_type)
+	{
+		case UI_MAIN:
+			LCD_PutNumber(2,0,1,NUM_40_64);
+			LCD_PutNumber(0,64,2,NUM_16_32);
+			SPILCD_ShowPicture(24,64,OLED_AIR_VOLUM,PICTURE_16_32);
+			SPILCD_ShowPicture(32,64,OLED_WIFI_OK,PICTURE_32_32);
+			SPILCD_ShowPicture(48,64,OLED_AUTO_MODE,PICTURE_32_32);
+			break;
+		case UI_WELCOME:
+			LCD_PutString(16,40,"质享科技");
+			break;
+		case UI_CONNECTING:
+			SPILCD_Clear(0x00);							//OLED清屏
+			LCD_PutString(16,40,"尝试连接");
+			break;
+		case UI_WIFI_CONFIG:
+			SPILCD_Clear(0x00);							//OLED清屏
+			LCD_PutString(16,40,"正在配网");
+			break;
+		case UI_MODE:
+			break;
+	}
 }
 
