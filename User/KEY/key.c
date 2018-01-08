@@ -124,10 +124,9 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		{
 			printf("POWER key up\r\n");
 			if(*mqtt_mode == '0')
-				strcpy(mqtt_mode,"A");
+				PowerOnOff(1);
 			else
-				strcpy(mqtt_mode,"0");
-			ModeCountrol();
+				PowerOnOff(0);
 //			SavePressLog();
 		}
 	}

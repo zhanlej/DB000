@@ -48,6 +48,8 @@ typedef enum
 {
 	NUM_40_64,
 	NUM_16_32,
+	NUM_32_45,
+	NUM_16_24,
 } OLED_NUM_TYPE_ENUM;	//OLED显示数字的尺寸
 
 typedef enum
@@ -58,8 +60,7 @@ typedef enum
 
 typedef enum
 {
-	OLED_WIFI_OK,
-	OLED_WIFI_FAIL,
+	OLED_WIFI,
 	OLED_AUTO_MODE,
 	OLED_SLEEP_MODE,
 	OLED_SPEED1_MODE,
@@ -71,6 +72,7 @@ typedef enum
 
 typedef enum
 {
+	UI_CLOSE,
 	UI_MAIN,
 	UI_WELCOME,
 	UI_CONNECTING,
@@ -78,17 +80,27 @@ typedef enum
 	UI_MODE,
 } OLED_UI_ENUM;					//OLED显示界面的类型
 
+typedef enum
+{
+	OLED_AIR_0 = 0,
+	OLED_AIR_S = 80,
+	OLED_AIR_1 = 120,
+	OLED_AIR_2 = 480,
+	OLED_AIR_3 = 720,
+} OLED_AIR_ENUM;				//OLED显示风量的大小
+
 typedef struct
 {
 	unsigned int pm2_5;
-	unsigned int air_volum;
-	OLED_PICTURE_ENUM wifi_status;
+	OLED_AIR_ENUM air_volum;
+	unsigned int wifi_status;
 	OLED_PICTURE_ENUM mode;
 } ui_main_t;						//主菜单的结构体
 
 typedef struct
 {
-	OLED_UI_ENUM ui_type;							//显示的界面
+	OLED_UI_ENUM ui_type;					//显示的界面
+	unsigned char ui_clear;				//是否需要清屏
 	unsigned char screen_light;		//是否亮屏
 	unsigned int light_time;			//亮屏时间，单位为秒
 	unsigned int switch_time;			//屏幕切换时间，单位为秒
@@ -100,6 +112,9 @@ extern OLED_display_t OLED_display;
 
 
 void OLED_init(void);
+void OLED_uitype_change(OLED_UI_ENUM ui_type);
+void OLED_mode_change(OLED_PICTURE_ENUM mode);
+void OLED_air_set(OLED_AIR_ENUM volum);
 void OLED_display_handle(void);
 void Delayms(unsigned short time);
 void LCD_WriteRegIndex(unsigned char Index);

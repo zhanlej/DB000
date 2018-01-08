@@ -49,6 +49,7 @@ void SendPress(void);
 int SendPingPack(int times);
 void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* return_len);	//接收mqtt的数据
 
+void PowerOnOff(unsigned char on_off);		//控制开关
 void ModeCountrol(void);
 void SetMotorLevel(int cmd);
 void MotorCountrol(unsigned char level); //马达控制函数

@@ -224,20 +224,20 @@ void SPILCD_DrawPoint(unsigned short x,unsigned short y,unsigned short color)
 	SPILCD_WriteRAM_Prepare();     //开始写入GRAM	 
 	SPILCD_WriteRAM(color);
 }
-void SPILCD_Fill(unsigned short xsta,unsigned short ysta,unsigned short xend,unsigned short yend,unsigned short color)
-{                    
-	unsigned short i,j;
-	//设置窗口		
-	SPILCD_SetWindow(xsta,xend,ysta,yend);
-	for(i=xsta;i<=xend;i++)
-		for(j=ysta;j<=yend;j++)
-	{
-		   	SPILCD_WriteRAM(color);	  //显示所填充的颜色. 
-// 		k=40000;while(k--);
-	}
-	//恢复设置
-	SPILCD_SetWindow(0,SPILCD_W-1,0,SPILCD_H-1);	    
-}
+//void SPILCD_Fill(unsigned short xsta,unsigned short ysta,unsigned short xend,unsigned short yend,unsigned short color)
+//{                    
+//	unsigned short i,j;
+//	//设置窗口		
+//	SPILCD_SetWindow(xsta,xend,ysta,yend);
+//	for(i=xsta;i<=xend;i++)
+//		for(j=ysta;j<=yend;j++)
+//	{
+//		   	SPILCD_WriteRAM(color);	  //显示所填充的颜色. 
+//// 		k=40000;while(k--);
+//	}
+//	//恢复设置
+//	SPILCD_SetWindow(0,SPILCD_W-1,0,SPILCD_H-1);	    
+//}
 //函数名：SPILCD_Clear
 //参  数：Color 颜色      
 void SPILCD_Clear(unsigned short Color)
@@ -415,12 +415,22 @@ void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_
 		width = 16;
 		high = 32;
 	}
+	else if(type == NUM_32_45)
+	{
+		width = 32;
+		high = 45;
+	}
+	else if(type == NUM_16_24)
+	{
+		width = 16;
+		high = 24;
+	}
 	
-	size = (high/8)*width;
+	size = high*(width/8);
 	
   WriteComm(0x15);//SET COLUMN ADDR 
-	WriteComm(x); 
-	WriteComm(x+((width/2)-1)); 
+	WriteComm(x/2); 
+	WriteComm((x+width)/2-1); 
 	WriteComm(0x75);//SET ROW ADDR 
 	WriteComm(0x0+y); 
 	WriteComm(0x0+y+high-1); 
@@ -437,6 +447,14 @@ void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_
 	{
 		SPILCD_WriteArray(i, size, NumberDot1632);
 	}
+	else if(type == NUM_32_45)
+	{
+		SPILCD_WriteArray(i, size, NumberDot3245);
+	}
+	else if(type == NUM_16_24)
+	{
+		SPILCD_WriteArray(i, size, NumberDot1624);
+	}
 }  
 
 void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_ENUM type) 
@@ -450,9 +468,13 @@ void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_E
 		number = 999;
 	
 	if(type == NUM_40_64)
-		width = 20;
+		width = 40;
 	else if(type == NUM_16_32)
-		width = 8;
+		width = 16;
+	else if(type == NUM_32_45)
+		width = 32;
+	else if(type == NUM_16_24)
+		width = 16;
 	
 	temp[0] = number/100%10;
 	temp[1] = number/10%10;
@@ -482,11 +504,11 @@ void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM pictur
 		high = 32;
 	}
 	
-	size = (high/8)*width;
+	size = high*(width/8);
 	
   WriteComm(0x15);//SET COLUMN ADDR 
-	WriteComm(x); 
-	WriteComm(x+((width/2)-1)); 
+	WriteComm(x/2); 
+	WriteComm((x+width)/2-1); 
 	WriteComm(0x75);//SET ROW ADDR 
 	WriteComm(0x0+y); 
 	WriteComm(0x0+y+high-1); 
@@ -535,25 +557,70 @@ void OLED_init(void)
 void OLED_display_init(void)
 {
 	OLED_display.ui_type = UI_WELCOME;
+	OLED_display.ui_clear = 0;
 	OLED_display.screen_light = 1;
 	OLED_display.light_time = OLED_LIGHT_TIME;
 	OLED_display.switch_time = OLED_SWITCH_TIME;
 	OLED_display.ui_main.pm2_5 = 0;
-	OLED_display.ui_main.air_volum = 0;
-	OLED_display.ui_main.wifi_status = OLED_WIFI_FAIL;
+	OLED_display.ui_main.air_volum = OLED_AIR_0;
+	OLED_display.ui_main.wifi_status = 0;
 	OLED_display.ui_main.mode = OLED_AUTO_MODE;
+}
+
+void OLED_uitype_change(OLED_UI_ENUM ui_type)
+{
+	OLED_display.ui_type = ui_type;
+	OLED_display.ui_clear = 1;				//需要清屏操作
+}
+
+void OLED_mode_change(OLED_PICTURE_ENUM mode)
+{
+	OLED_display.ui_main.mode = mode;
+}
+
+void OLED_air_set(OLED_AIR_ENUM volum)
+{
+	OLED_display.ui_main.air_volum = volum;
 }
 
 void OLED_display_handle(void)
 {
+	static unsigned char wifi_flag = 0;
+	static int count = 0;
+	
+	if(OLED_display.ui_clear)
+	{
+		OLED_display.ui_clear = 0;
+		SPILCD_Clear(0x00);							//OLED清屏
+	}
+	
 	switch(OLED_display.ui_type)
 	{
+		case UI_CLOSE:
+			break;
 		case UI_MAIN:
-			LCD_PutNumber(2,0,1,NUM_40_64);
-			LCD_PutNumber(0,64,2,NUM_16_32);
-			SPILCD_ShowPicture(24,64,OLED_AIR_VOLUM,PICTURE_16_32);
-			SPILCD_ShowPicture(32,64,OLED_WIFI_OK,PICTURE_32_32);
-			SPILCD_ShowPicture(48,64,OLED_AUTO_MODE,PICTURE_32_32);
+			LCD_PutNumber(16,5,count,NUM_32_45);
+			SPILCD_Fill(2,54,124,1,0xff);
+			//LCD_PutNumber(0,64,2,NUM_16_32);
+			LCD_PutNumber(0,64,OLED_display.ui_main.air_volum,NUM_16_24);
+			SPILCD_ShowPicture(48,64,OLED_AIR_VOLUM,PICTURE_16_32);
+			if(OLED_display.ui_main.wifi_status == 1)
+				SPILCD_ShowPicture(64,64,OLED_WIFI,PICTURE_32_32);
+			else
+			{
+				if(wifi_flag == 0)
+				{
+					wifi_flag = 1;
+					//清空wifi区域的图案
+					SPILCD_Fill(64,64,32,32,0x00);
+				}
+				else
+				{
+					wifi_flag = 0;
+					SPILCD_ShowPicture(64,64,OLED_WIFI,PICTURE_32_32);
+				}
+			}
+			SPILCD_ShowPicture(96,64,OLED_display.ui_main.mode,PICTURE_32_32);
 			break;
 		case UI_WELCOME:
 			LCD_PutString(16,40,"质享科技");
@@ -569,5 +636,29 @@ void OLED_display_handle(void)
 		case UI_MODE:
 			break;
 	}
+	
+	count++;
 }
 
+void SPILCD_Fill(unsigned short xsta,unsigned short ysta,unsigned short xlen,unsigned short ylen,unsigned short color)
+{       
+	int i,j;
+	
+  WriteComm(0x15);//SET COLUMN ADDR 
+	WriteComm(xsta/2); 
+	WriteComm((xsta+xlen)/2-1); 
+	WriteComm(0x75);//SET ROW ADDR 
+	WriteComm(ysta); 
+	WriteComm(ysta+ylen-1);  
+
+	SPI_CS(0);	
+	for(i=0/2;i<(xlen/2);i++)
+	{
+		for(j=0;j<ylen;j++)
+		{
+			SPILCD_WriteRAM(color);//显示所填充的颜色. 
+//	 		i=40000;while(i--);
+		}
+	}		
+	SPI_CS(1);
+}

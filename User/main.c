@@ -102,7 +102,7 @@ int main()
 	beep_on(BEEP_ON);								//蜂鸣器开机
 	
 	OLED_display_handle();					//OLED屏幕显示函数
-	OLED_display.ui_type = UI_MAIN;	//OLED切换到主界面
+	OLED_uitype_change(UI_CONNECTING);		//OLED切换到尝试连接界面
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);	//读取MCU_ID号
@@ -155,6 +155,8 @@ int main()
 					break;
 			}
 		}
+		else
+			delay_ms(1000);	//因为连接成功状态下会有1S延时
   }
 }
 
@@ -376,7 +378,8 @@ void restart_MCU(void)
 {
   trans_module_restart();
 	All_State = DISCNNECT;
-	OLED_display.ui_main.wifi_status = OLED_WIFI_FAIL;
+	OLED_display.ui_main.wifi_status = 0;
+	OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
 }
 
 void Initial_trans_module()
@@ -388,7 +391,7 @@ void Initial_trans_module()
 	{
 		printf("trans_module_init is OK!");
 		All_State = initialTCP;
-		OLED_display.ui_main.wifi_status = OLED_WIFI_OK;
+		OLED_display.ui_main.wifi_status = 1;
 	}
 	else
 	{
@@ -807,20 +810,16 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
       printf("recive power is %s, power_state is %s\r\n", power_tmp, power_state);
       if(!strcmp(power_state, "on"))
       {
-        strcpy(mqtt_mode, "A");
-        printf("power on, mqtt_mode = %s\r\n", mqtt_mode);
+				PowerOnOff(1);
       }
       else if(!strcmp(power_state, "off"))
       {
-        strcpy(mqtt_mode, "0");
-        printf("power off, mqtt_mode = %s\r\n", mqtt_mode);
+				PowerOnOff(0);
       }
       else
       {
-        strcpy(mqtt_mode, "0");
-        printf("power messge is error, mqtt_mode = %s\r\n", mqtt_mode);
+        PowerOnOff(0);
       }
-			ModeCountrol();
     }
 
     //处理mode数据
@@ -953,12 +952,29 @@ void FanTest(char * fan_test)
 	SetMotorLevel(fan_tmp);
 }
 
+void PowerOnOff(unsigned char on_off)
+{
+	if(on_off)
+	{
+		strcpy(mqtt_mode, "A");
+    printf("power on, mqtt_mode = %s\r\n", mqtt_mode);
+		OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
+	}
+	else
+	{
+		strcpy(mqtt_mode, "0");
+    printf("power messge is error, mqtt_mode = %s\r\n", mqtt_mode);
+		OLED_uitype_change(UI_CLOSE);	//OLED切换到息屏
+	}
+	
+	ModeCountrol();
+}
+
 void ModeCountrol(void)
 {
   if(*mqtt_mode == '0')
   {		
 		fan_level = 0;
-    MotorCountrol(0); //关闭风机
   }
   else if((*mqtt_mode > '0' && *mqtt_mode <= '9') || (*mqtt_mode == 'A'))
   {
@@ -972,8 +988,6 @@ void ModeCountrol(void)
         fan_level = 0;
         printf("Conce_PM2_5 is error\r\n");
       }
-
-      MotorCountrol(fan_level);
     }
     else    //控制模式
     {
@@ -999,10 +1013,36 @@ void ModeCountrol(void)
           fan_level = 0;
           break;
       }
-
-      MotorCountrol(fan_level);
     }
   }
+	
+	MotorCountrol(fan_level);	//控制风机
+	
+	//改变OLED模式显示
+	switch(*mqtt_mode)
+	{
+		case 'A':
+			OLED_mode_change(OLED_AUTO_MODE);
+			break;
+		case '1':
+			OLED_mode_change(OLED_SLEEP_MODE);
+			break;
+		case '2':
+			OLED_mode_change(OLED_SPEED1_MODE);
+			break;
+		case '3':
+			OLED_mode_change(OLED_SPEED2_MODE);
+			break;
+		case '4':
+			OLED_mode_change(OLED_SPEED3_MODE);
+			break;
+		case '0':
+			OLED_mode_change(OLED_AUTO_MODE);
+			break;
+		default:
+			OLED_mode_change(OLED_AUTO_MODE);
+			break;
+	}
 	
 	//如果是在待机状态或睡眠模式下关闭空气质量灯
 	AirLEDControl();
@@ -1022,22 +1062,27 @@ void MotorCountrol(unsigned char level)
   {
     case 1:
       SetMotorLevel(MOTORSPEED1);
+			OLED_air_set(OLED_AIR_S);
       printf("Set Motor speed is 1\r\n");
       break;
     case 2:
       SetMotorLevel(MOTORSPEED2);
+			OLED_air_set(OLED_AIR_1);
       printf("Set Motor speed is 2\r\n");
       break;
     case 3:
       SetMotorLevel(MOTORSPEED3);
+			OLED_air_set(OLED_AIR_2);
       printf("Set Motor speed is 3\r\n");
       break;
     case 4:
       SetMotorLevel(MOTORSPEED4);
+			OLED_air_set(OLED_AIR_3);
       printf("Set Motor speed is 4\r\n");
       break;
     default:
       SetMotorLevel(MOTORSPEED0);
+			OLED_air_set(OLED_AIR_0);
       printf("Set Motor is power down\r\n");
   }
 }
