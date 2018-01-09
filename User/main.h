@@ -36,10 +36,10 @@ void GPIO_Configuration(void);
 void TIM3_Int_Init(u16 arr,u16 psc);
 
 //通过状态机的方式控制整个代码流程
-void restart_MCU(void);
-void Initial_trans_module(void);
-void Initial_MQTT(void);
-void MQTT_Sub0Pub1(void);
+void wifi_status_set(unsigned char status);
+int Initial_trans_module(void);
+int Initial_MQTT(void);
+int MQTT_Sub0Pub1(void);
 int Public_Open(int time);	//发布开机指令
 void Transmission_State(void);
 //int fifo1readdata(unsigned char* s, int maxlen);

@@ -164,13 +164,13 @@ void ILI9325_CMO24_Initial(void)
 
 
 	WriteComm(0xa0);    //segment remap
-	WriteComm(0x51);	  //
+	WriteComm(0x42);	  //
 
 	WriteComm(0xa1);	 // start line
 	WriteComm(0x00);
 
 	WriteComm(0xa2);	 // display offset
-	WriteComm(0x00);
+	WriteComm(0x60);
 
 	WriteComm(0xa4);    //normal display
 
@@ -560,7 +560,7 @@ void OLED_display_init(void)
 	OLED_display.ui_clear = 0;
 	OLED_display.screen_light = 1;
 	OLED_display.light_time = OLED_LIGHT_TIME;
-	OLED_display.switch_time = OLED_SWITCH_TIME;
+	OLED_display.switch_time = 0;
 	OLED_display.ui_main.pm2_5 = 0;
 	OLED_display.ui_main.air_volum = OLED_AIR_0;
 	OLED_display.ui_main.wifi_status = 0;
@@ -573,9 +573,46 @@ void OLED_uitype_change(OLED_UI_ENUM ui_type)
 	OLED_display.ui_clear = 1;				//需要清屏操作
 }
 
+void OLED_ui_switch_set(OLED_UI_ENUM ui)	//OLED切换界面设置
+{
+	switch(ui)
+	{
+		case UI_CONNECT_OK:
+		case UI_CONNECT_FAIL:
+		case UI_MODE:
+			OLED_uitype_change(ui);	//OLED切换到对应的界面
+			OLED_display.switch_time = OLED_SWITCH_TIME;
+			break;
+		default:
+			break;
+	}
+}
+
+unsigned int OLED_switchtime_get(OLED_UI_ENUM ui)		//获取OLED切换界面时间
+{
+	return OLED_display.switch_time;
+}
+
+void OLED_switchtime_set(unsigned int switch_time)	//设置OLED切换界面时间
+{
+	OLED_display.switch_time = switch_time;
+}
+
+void OLED_wifi_status_set(unsigned char status)
+{
+	OLED_display.ui_main.wifi_status = status;
+	if(status)
+	{
+		OLED_ui_switch_set(UI_CONNECT_OK);
+	}
+	else
+		OLED_ui_switch_set(UI_CONNECT_FAIL);
+}
+
 void OLED_mode_change(OLED_PICTURE_ENUM mode)
 {
 	OLED_display.ui_main.mode = mode;
+	OLED_ui_switch_set(UI_MODE);
 }
 
 void OLED_air_set(OLED_AIR_ENUM volum)
@@ -626,14 +663,71 @@ void OLED_display_handle(void)
 			LCD_PutString(16,40,"质享科技");
 			break;
 		case UI_CONNECTING:
-			SPILCD_Clear(0x00);							//OLED清屏
 			LCD_PutString(16,40,"尝试连接");
 			break;
 		case UI_WIFI_CONFIG:
-			SPILCD_Clear(0x00);							//OLED清屏
 			LCD_PutString(16,40,"正在配网");
 			break;
+		case UI_CONNECT_OK:
+			if(OLED_display.switch_time)
+			{
+				LCD_PutString(16,40,"连接成功");
+				OLED_display.switch_time--;
+			}
+			else
+			{
+				if(OLED_display.ui_main.air_volum == OLED_AIR_0)
+				{
+					OLED_uitype_change(UI_CLOSE);
+				}
+				else
+					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+			}
+			break;
+		case UI_CONNECT_FAIL:
+			if(OLED_display.switch_time)
+			{
+				OLED_display.switch_time--;
+				LCD_PutString(16,40,"连接失败");
+			}
+			else
+			{
+				if(OLED_display.ui_main.air_volum == OLED_AIR_0)
+				{
+					OLED_uitype_change(UI_CLOSE);
+				}
+				else
+					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+			}
+			break;
 		case UI_MODE:
+			if(OLED_display.switch_time)
+			{
+				OLED_display.switch_time--;
+				
+				switch(OLED_display.ui_main.mode)
+				{
+					case OLED_AUTO_MODE:
+						LCD_PutString(16,40,"自动模式");
+						break;
+					case OLED_SLEEP_MODE:
+						LCD_PutString(16,40,"睡眠模式");
+						break;
+					case OLED_SPEED1_MODE:
+						LCD_PutString(16,40,"一档模式");
+						break;
+					case OLED_SPEED2_MODE:
+						LCD_PutString(16,40,"二档模式");
+						break;
+					case OLED_SPEED3_MODE:
+						LCD_PutString(16,40,"三档模式");
+						break;
+					default:
+						break;
+				}
+			}
+			else
+				OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
 			break;
 	}
 	

@@ -140,13 +140,10 @@ int main()
 			switch (All_State)
 			{
 				case initialWAITOK:
-					Initial_trans_module();
-					break;
-				case initialTCP:
-					Initial_MQTT();
-					break;
-				case initialMQTT:
-					MQTT_Sub0Pub1();
+					if(!Initial_trans_module()) break;
+					if(!Initial_MQTT()) break;
+					if(!MQTT_Sub0Pub1()) break;
+					wifi_status_set(1);
 					break;
 				case sendPM:
 					Transmission_State();
@@ -233,8 +230,8 @@ void GPIO_Configuration(void)
 	
 	/*   蜂鸣器   */
 	//在beep_init()中配置
-  //BUZZER_PIN_F为PB11
-	//BUZZER_PIN_V为PB12
+  //BUZZER_PIN_F为PA11
+	//BUZZER_PIN_V为PA12
 	/*   蜂鸣器   */
 
 	/*   空气质量灯   */
@@ -374,15 +371,17 @@ void TIM3_Int_Init(u16 arr, u16 psc)
   TIM_Cmd(TIM3, ENABLE);  //使能TIMx
 }
 
-void restart_MCU(void)
+void wifi_status_set(unsigned char status)
 {
-  trans_module_restart();
-	All_State = DISCNNECT;
-	OLED_display.ui_main.wifi_status = 0;
-	OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
+	if(status)
+		All_State = sendPM;
+	else
+		All_State = DISCNNECT;
+	
+	OLED_wifi_status_set(status);
 }
 
-void Initial_trans_module()
+int Initial_trans_module()
 {
   printf("test!\r\n");
 
@@ -391,16 +390,17 @@ void Initial_trans_module()
 	{
 		printf("trans_module_init is OK!");
 		All_State = initialTCP;
-		OLED_display.ui_main.wifi_status = 1;
 	}
 	else
 	{
 		printf("trans_module_init is FAIL!");
-		restart_MCU();
+		wifi_status_set(0);
+		return 0;
 	}
+	return 1;
 }
 
-void Initial_MQTT()
+int Initial_MQTT()
 {
 
   MQTTPacket_connectData mqtt_data = MQTTPacket_connectData_initializer;
@@ -431,8 +431,8 @@ void Initial_MQTT()
     if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqtt_buf, mqtt_buflen) != 1 || connack_rc != 0)
     {
       printf("MQTT CONNACK1 FAILED!\r\n");
-      restart_MCU();
-			return;
+      wifi_status_set(0);
+			return 0;
     }
     else
     {
@@ -444,12 +444,14 @@ void Initial_MQTT()
   {
     //failed ???
     printf("MQTT CONNACK2 FAILED!\r\n");
-    restart_MCU();
-		return;
+    wifi_status_set(0);
+		return 0;
   }
+	
+	return 1;
 }
 
-void MQTT_Sub0Pub1()
+int MQTT_Sub0Pub1()
 {
 
   int msgid = 1;
@@ -476,8 +478,8 @@ void MQTT_Sub0Pub1()
     {
       //wrong
       printf("MQTT SUBACK1 FAILED!\r\n");
-      restart_MCU();
-			return;
+      wifi_status_set(0);
+			return 0;
     }
     else
     {
@@ -487,8 +489,8 @@ void MQTT_Sub0Pub1()
   else
   {
     printf("MQTT SUBACK2 FAILED!\r\n");
-    restart_MCU();
-		return;
+    wifi_status_set(0);
+		return 0;
   }
 	
 	//接收retain数据：expiresAt和childLock
@@ -517,11 +519,10 @@ void MQTT_Sub0Pub1()
   if(!Public_Open(5))
   {
     printf("PUBLIC OPEN ERROR");
-    restart_MCU();
-		return;
+    wifi_status_set(0);
+		return 0;
   }
   printf("PUBLIC OPEN OK!\r\n");
-	All_State = sendPM;
 
   //发布主题
   sprintf(topic_group, "SHAir/%s/update", deviceID);
@@ -543,6 +544,8 @@ void MQTT_Sub0Pub1()
 	SendJson(CONNECTION_MODE);
 //	//紧接着发送地理位置信息。
 //	SendJson(GEO_MODE);
+	
+	return 1;
 }
 
 int Public_Open(int time)
@@ -599,7 +602,7 @@ void Transmission_State()
 			gprs_break_cnt++;
 			if(gprs_break_cnt >= GPRS_STATE_TIME_SIZE)	gprs_break_cnt = 0;
 			//重启GPRS模块
-			restart_MCU();
+			wifi_status_set(0);
 			return;
 		}
 	}
@@ -1036,13 +1039,16 @@ void ModeCountrol(void)
 		case '4':
 			OLED_mode_change(OLED_SPEED3_MODE);
 			break;
-		case '0':
-			OLED_mode_change(OLED_AUTO_MODE);
-			break;
-		default:
-			OLED_mode_change(OLED_AUTO_MODE);
-			break;
+//		case '0':
+//			OLED_mode_change(OLED_AUTO_MODE);
+//			break;
+//		default:
+//			OLED_mode_change(OLED_AUTO_MODE);
+//			break;
 	}
+	
+	//控制蜂鸣器
+	beep_on(BEEP_CMD);
 	
 	//如果是在待机状态或睡眠模式下关闭空气质量灯
 	AirLEDControl();

@@ -77,6 +77,9 @@ typedef enum
 	UI_WELCOME,
 	UI_CONNECTING,
 	UI_WIFI_CONFIG,
+	//下面是切换的界面
+	UI_CONNECT_OK,
+	UI_CONNECT_FAIL,
 	UI_MODE,
 } OLED_UI_ENUM;					//OLED显示界面的类型
 
@@ -113,6 +116,10 @@ extern OLED_display_t OLED_display;
 
 void OLED_init(void);
 void OLED_uitype_change(OLED_UI_ENUM ui_type);
+void OLED_ui_switch_set(OLED_UI_ENUM ui);							//OLED切换界面设置
+unsigned int OLED_switchtime_get(OLED_UI_ENUM ui);		//获取OLED切换界面时间
+void OLED_switchtime_set(unsigned int switch_time);		//设置OLED切换界面时间
+void OLED_wifi_status_set(unsigned char status);
 void OLED_mode_change(OLED_PICTURE_ENUM mode);
 void OLED_air_set(OLED_AIR_ENUM volum);
 void OLED_display_handle(void);
