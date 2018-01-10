@@ -102,7 +102,6 @@ int main()
 	beep_on(BEEP_ON);								//蜂鸣器开机
 	
 	OLED_display_handle();					//OLED屏幕显示函数
-	OLED_uitype_change(UI_CONNECTING);		//OLED切换到尝试连接界面
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);	//读取MCU_ID号
@@ -128,6 +127,8 @@ int main()
 		if(key_flag.Comb_flag == 1)
 		{
 			key_flag.Comb_flag = 0;
+			wifi_status_set(OLED_WIFI_RESTORE);	//设置为wifi重置模式
+			beep_on(BEEP_CMD);									//蜂鸣器
 			All_State = initialWAITOK;
 			smartconfig_flag = 1;
 			trans_module_restart();
@@ -141,9 +142,10 @@ int main()
 			{
 				case initialWAITOK:
 					if(!Initial_trans_module()) break;
+					wifi_status_set(OLED_WIFI_CONNECT_SERVER);	//设置为连接服务器模式
 					if(!Initial_MQTT()) break;
 					if(!MQTT_Sub0Pub1()) break;
-					wifi_status_set(1);
+					wifi_status_set(OLED_WIFI_OK);
 					break;
 				case sendPM:
 					Transmission_State();
@@ -373,7 +375,7 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 
 void wifi_status_set(unsigned char status)
 {
-	if(status)
+	if(status == OLED_WIFI_OK)
 		All_State = sendPM;
 	else
 		All_State = DISCNNECT;
@@ -394,7 +396,7 @@ int Initial_trans_module()
 	else
 	{
 		printf("trans_module_init is FAIL!");
-		wifi_status_set(0);
+		wifi_status_set(OLED_WIFI_FAIL);
 		return 0;
 	}
 	return 1;
@@ -431,7 +433,7 @@ int Initial_MQTT()
     if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqtt_buf, mqtt_buflen) != 1 || connack_rc != 0)
     {
       printf("MQTT CONNACK1 FAILED!\r\n");
-      wifi_status_set(0);
+      wifi_status_set(OLED_WIFI_FAIL);
 			return 0;
     }
     else
@@ -444,7 +446,7 @@ int Initial_MQTT()
   {
     //failed ???
     printf("MQTT CONNACK2 FAILED!\r\n");
-    wifi_status_set(0);
+    wifi_status_set(OLED_WIFI_FAIL);
 		return 0;
   }
 	
@@ -478,7 +480,7 @@ int MQTT_Sub0Pub1()
     {
       //wrong
       printf("MQTT SUBACK1 FAILED!\r\n");
-      wifi_status_set(0);
+      wifi_status_set(OLED_WIFI_FAIL);
 			return 0;
     }
     else
@@ -489,7 +491,7 @@ int MQTT_Sub0Pub1()
   else
   {
     printf("MQTT SUBACK2 FAILED!\r\n");
-    wifi_status_set(0);
+    wifi_status_set(OLED_WIFI_FAIL);
 		return 0;
   }
 	
@@ -519,7 +521,7 @@ int MQTT_Sub0Pub1()
   if(!Public_Open(5))
   {
     printf("PUBLIC OPEN ERROR");
-    wifi_status_set(0);
+    wifi_status_set(OLED_WIFI_FAIL);
 		return 0;
   }
   printf("PUBLIC OPEN OK!\r\n");
@@ -602,7 +604,7 @@ void Transmission_State()
 			gprs_break_cnt++;
 			if(gprs_break_cnt >= GPRS_STATE_TIME_SIZE)	gprs_break_cnt = 0;
 			//重启GPRS模块
-			wifi_status_set(0);
+			wifi_status_set(OLED_WIFI_FAIL);
 			return;
 		}
 	}
@@ -701,6 +703,14 @@ void TIM3_IRQHandler(void)   //TIM3中断
       tim3_cnt = 0;
       send_flag = 1;
     }
+		
+		//减OLED切屏时间
+		if(OLED_switchtime_get() > 0)
+		{
+			unsigned int switch_time = OLED_switchtime_get();
+			switch_time--;
+			OLED_switchtime_set(switch_time);
+		}
 
     tim3_cnt++;
   }

@@ -563,7 +563,7 @@ void OLED_display_init(void)
 	OLED_display.switch_time = 0;
 	OLED_display.ui_main.pm2_5 = 0;
 	OLED_display.ui_main.air_volum = OLED_AIR_0;
-	OLED_display.ui_main.wifi_status = 0;
+	OLED_display.ui_main.wifi_status = OLED_WIFI_FAIL;
 	OLED_display.ui_main.mode = OLED_AUTO_MODE;
 }
 
@@ -575,20 +575,15 @@ void OLED_uitype_change(OLED_UI_ENUM ui_type)
 
 void OLED_ui_switch_set(OLED_UI_ENUM ui)	//OLED切换界面设置
 {
-	switch(ui)
+	if(ui == UI_WIFI_STATUS || ui == UI_MODE)		//只有这两种情况是需要界面切换的
 	{
-		case UI_CONNECT_OK:
-		case UI_CONNECT_FAIL:
-		case UI_MODE:
-			OLED_uitype_change(ui);	//OLED切换到对应的界面
-			OLED_display.switch_time = OLED_SWITCH_TIME;
-			break;
-		default:
-			break;
+		OLED_uitype_change(ui);	//OLED切换到对应的界面
+		OLED_display.switch_time = OLED_SWITCH_TIME;
+		OLED_display_handle();
 	}
 }
 
-unsigned int OLED_switchtime_get(OLED_UI_ENUM ui)		//获取OLED切换界面时间
+unsigned int OLED_switchtime_get(void)		//获取OLED切换界面时间
 {
 	return OLED_display.switch_time;
 }
@@ -598,15 +593,10 @@ void OLED_switchtime_set(unsigned int switch_time)	//设置OLED切换界面时间
 	OLED_display.switch_time = switch_time;
 }
 
-void OLED_wifi_status_set(unsigned char status)
+void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status)
 {
 	OLED_display.ui_main.wifi_status = status;
-	if(status)
-	{
-		OLED_ui_switch_set(UI_CONNECT_OK);
-	}
-	else
-		OLED_ui_switch_set(UI_CONNECT_FAIL);
+	OLED_ui_switch_set(UI_WIFI_STATUS);
 }
 
 void OLED_mode_change(OLED_PICTURE_ENUM mode)
@@ -641,7 +631,7 @@ void OLED_display_handle(void)
 			//LCD_PutNumber(0,64,2,NUM_16_32);
 			LCD_PutNumber(0,64,OLED_display.ui_main.air_volum,NUM_16_24);
 			SPILCD_ShowPicture(48,64,OLED_AIR_VOLUM,PICTURE_16_32);
-			if(OLED_display.ui_main.wifi_status == 1)
+			if(OLED_display.ui_main.wifi_status == OLED_WIFI_OK)
 				SPILCD_ShowPicture(64,64,OLED_WIFI,PICTURE_32_32);
 			else
 			{
@@ -668,29 +658,32 @@ void OLED_display_handle(void)
 		case UI_WIFI_CONFIG:
 			LCD_PutString(16,40,"正在配网");
 			break;
-		case UI_CONNECT_OK:
-			if(OLED_display.switch_time)
-			{
-				LCD_PutString(16,40,"连接成功");
-				OLED_display.switch_time--;
-			}
-			else
-			{
-				if(OLED_display.ui_main.air_volum == OLED_AIR_0)
+		case UI_WIFI_STATUS:
+			if(OLED_display.switch_time)						//切换界面的时间还没到
+			{			
+				switch(OLED_display.ui_main.wifi_status)
 				{
-					OLED_uitype_change(UI_CLOSE);
-				}
-				else
-					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+					case OLED_WIFI_OK:
+						LCD_PutString(16,40,"连接成功");
+						break;
+					case OLED_WIFI_FAIL:
+						LCD_PutString(16,40,"连接失败");
+						break;
+					case OLED_WIFI_AUTO_CONNECT:
+						LCD_PutString(16,40,"尝试连接");
+						break;
+					case OLED_WIFI_CONNECT_SERVER:
+						LCD_PutString(16,40,"连服务器");
+						break;
+					case OLED_WIFI_RESTORE:
+						LCD_PutString(16,40,"wifi重置");
+						break;
+					case OLED_WIFI_CONFIG:
+						LCD_PutString(16,40,"正在配网");
+						break;
+				}				
 			}
-			break;
-		case UI_CONNECT_FAIL:
-			if(OLED_display.switch_time)
-			{
-				OLED_display.switch_time--;
-				LCD_PutString(16,40,"连接失败");
-			}
-			else
+			else																		//到时间后判断如果在关机状态就切换到关屏界面，否则切换到主菜单界面
 			{
 				if(OLED_display.ui_main.air_volum == OLED_AIR_0)
 				{
@@ -703,8 +696,6 @@ void OLED_display_handle(void)
 		case UI_MODE:
 			if(OLED_display.switch_time)
 			{
-				OLED_display.switch_time--;
-				
 				switch(OLED_display.ui_main.mode)
 				{
 					case OLED_AUTO_MODE:
@@ -727,7 +718,12 @@ void OLED_display_handle(void)
 				}
 			}
 			else
-				OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+			{
+				if(OLED_display.ui_main.wifi_status != OLED_WIFI_FAIL && OLED_display.ui_main.wifi_status != OLED_WIFI_OK)	//如果在连网状态，模式界面显示完后会切换回连网界面
+					OLED_ui_switch_set(UI_WIFI_STATUS);
+				else
+					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+			}
 			break;
 	}
 	

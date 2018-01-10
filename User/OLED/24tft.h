@@ -78,8 +78,7 @@ typedef enum
 	UI_CONNECTING,
 	UI_WIFI_CONFIG,
 	//下面是切换的界面
-	UI_CONNECT_OK,
-	UI_CONNECT_FAIL,
+	UI_WIFI_STATUS,
 	UI_MODE,
 } OLED_UI_ENUM;					//OLED显示界面的类型
 
@@ -92,11 +91,21 @@ typedef enum
 	OLED_AIR_3 = 720,
 } OLED_AIR_ENUM;				//OLED显示风量的大小
 
+typedef enum
+{
+	OLED_WIFI_FAIL,
+	OLED_WIFI_OK,
+	OLED_WIFI_AUTO_CONNECT,
+	OLED_WIFI_CONNECT_SERVER,
+	OLED_WIFI_RESTORE,
+	OLED_WIFI_CONFIG,
+} OLED_WIFI_STATUS_ENUM;				//OLED显示风量的大小
+
 typedef struct
 {
 	unsigned int pm2_5;
 	OLED_AIR_ENUM air_volum;
-	unsigned int wifi_status;
+	OLED_WIFI_STATUS_ENUM wifi_status;
 	OLED_PICTURE_ENUM mode;
 } ui_main_t;						//主菜单的结构体
 
@@ -117,9 +126,9 @@ extern OLED_display_t OLED_display;
 void OLED_init(void);
 void OLED_uitype_change(OLED_UI_ENUM ui_type);
 void OLED_ui_switch_set(OLED_UI_ENUM ui);							//OLED切换界面设置
-unsigned int OLED_switchtime_get(OLED_UI_ENUM ui);		//获取OLED切换界面时间
+unsigned int OLED_switchtime_get(void);										//获取OLED切换界面时间
 void OLED_switchtime_set(unsigned int switch_time);		//设置OLED切换界面时间
-void OLED_wifi_status_set(unsigned char status);
+void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status);
 void OLED_mode_change(OLED_PICTURE_ENUM mode);
 void OLED_air_set(OLED_AIR_ENUM volum);
 void OLED_display_handle(void);

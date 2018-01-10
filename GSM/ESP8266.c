@@ -141,16 +141,14 @@ int WifiInit(const char *addr, uint32_t port, char *http_data)
 	
 	if(smartconfig_flag)
 	{
-		OLED_uitype_change(UI_WIFI_CONFIG);	//OLED切换到正在配网界面
-		OLED_display_handle();									//OLED屏幕显示函数
+		OLED_wifi_status_set(OLED_WIFI_CONFIG);	//设置为配网模式
 		smartconfig_flag = 0;
 		if(!SmartConfig()) return 0;
 		printf("SmartConfig() ok!\r\n");
 	}
 	else
 	{
-		OLED_uitype_change(UI_CONNECTING);		//OLED切换到尝试连接界面
-		OLED_display_handle();									//OLED屏幕显示函数
+		OLED_wifi_status_set(OLED_WIFI_AUTO_CONNECT);	//设置为自动连接模式
 		if(!AutoLink()) return 0;
 		printf("AutoLink() ok!\r\n");
 	}
