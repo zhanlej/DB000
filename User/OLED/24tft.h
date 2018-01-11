@@ -46,28 +46,44 @@
 						
 typedef enum
 {
-	NUM_40_64,
-	NUM_16_32,
-	NUM_32_45,
-	NUM_16_24,
-} OLED_NUM_TYPE_ENUM;	//OLED显示数字的尺寸
+	HINT_STRING_X = 16,
+	HINT_STRING_Y = 40,
+	PM2_5_X = 16,
+	PM2_5_Y = 2,
+	LINE_X = 2,
+	LINE_Y = 54,
+	LINE_WIDTH = 124,
+	LINE_HIGH = 2,
+	AIR_VOLUM_X = 0,
+	AIR_VOLUM_Y = 67,
+	VOLUM_WIFI_X = 48,
+	VOLUM_WIFI_Y = 62,
+	SMALL_MODE_X = 96,
+	SMALL_MODE_Y = 62,
+	BIG_MODE_X = 40,
+	BIG_MODE_Y = 24,
+} OLED_PIC_POS_ENUM;	//OLED显示数字的位置，单位像素
 
 typedef enum
 {
-	PICTURE_16_32,
+	NUM_32_48,
+	NUM_16_22,
 	PICTURE_32_32,
+	PICTURE_48_32,
+	PICTURE_48_48,
 } OLED_PICTURE_TYPE_ENUM;	//OLED显示图片的尺寸
 
 typedef enum
 {
-	OLED_WIFI,
+	//32*32 and 48*48
 	OLED_AUTO_MODE,
 	OLED_SLEEP_MODE,
 	OLED_SPEED1_MODE,
 	OLED_SPEED2_MODE,
 	OLED_SPEED3_MODE,
-	
+	//48*32
 	OLED_AIR_VOLUM = 0,
+	OLED_AIR_VOLUM_WIFI,
 } OLED_PICTURE_ENUM;	//OLED显示图片的类型
 
 typedef enum
@@ -146,8 +162,8 @@ void SPILCD_DrawLine(unsigned short x1,unsigned short y1,unsigned short x2,unsig
 void SPILCD_ShowChar(unsigned char x,unsigned char y,unsigned char num);
 void LCD_PutString(unsigned char x, unsigned char y, unsigned char *s);
 void LCD_Fill_Pic(u16 x, u16 y,u16 pic_H, u16 pic_V, const unsigned char* pic);
-void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_ENUM type);
-void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM picture, OLED_PICTURE_TYPE_ENUM type);
+void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_PICTURE_TYPE_ENUM type);
+void SPILCD_ShowPicture(unsigned char x,unsigned char y,unsigned int picture, OLED_PICTURE_TYPE_ENUM type);
 
 #endif
 

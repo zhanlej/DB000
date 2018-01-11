@@ -399,109 +399,35 @@ void SPILCD_WriteArray(unsigned int start, unsigned int size, const unsigned cha
 	}
 }
 
-void SPILCD_ShowNum(unsigned char x,unsigned char y,unsigned char num, OLED_NUM_TYPE_ENUM type)
+void SPILCD_ShowPicture(unsigned char x,unsigned char y,unsigned int picture, OLED_PICTURE_TYPE_ENUM type)
 {       
 	unsigned int i;  
 	unsigned char width, high;
 	unsigned int size = 0;
+	unsigned char * array_p;
 	
-	if(type == NUM_40_64)
+	switch(type)
 	{
-		width = 40;
-		high = 64;
-	}
-	else if(type == NUM_16_32)
-	{
-		width = 16;
-		high = 32;
-	}
-	else if(type == NUM_32_45)
-	{
-		width = 32;
-		high = 45;
-	}
-	else if(type == NUM_16_24)
-	{
-		width = 16;
-		high = 24;
-	}
-	
-	size = high*(width/8);
-	
-  WriteComm(0x15);//SET COLUMN ADDR 
-	WriteComm(x/2); 
-	WriteComm((x+width)/2-1); 
-	WriteComm(0x75);//SET ROW ADDR 
-	WriteComm(0x0+y); 
-	WriteComm(0x0+y+high-1); 
-	lcd_RS(1);
-	SPI_CS(0);  
-	//num=num-'0';//得到偏移后的值
-	i=num*size;
-
-	if(type == NUM_40_64)
-	{
-		SPILCD_WriteArray(i, size, NumberDot4060);
-	}
-	else if(type == NUM_16_32)
-	{
-		SPILCD_WriteArray(i, size, NumberDot1632);
-	}
-	else if(type == NUM_32_45)
-	{
-		SPILCD_WriteArray(i, size, NumberDot3245);
-	}
-	else if(type == NUM_16_24)
-	{
-		SPILCD_WriteArray(i, size, NumberDot1624);
-	}
-}  
-
-void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_NUM_TYPE_ENUM type) 
-{
-	unsigned char l=0;
-	unsigned char i=0;
-	unsigned char temp[3];
-	unsigned char width;
-	
-	if(number > 999)						//最大显示数值为999
-		number = 999;
-	
-	if(type == NUM_40_64)
-		width = 40;
-	else if(type == NUM_16_32)
-		width = 16;
-	else if(type == NUM_32_45)
-		width = 32;
-	else if(type == NUM_16_24)
-		width = 16;
-	
-	temp[0] = number/100%10;
-	temp[1] = number/10%10;
-	temp[2] = number%10;
-	
-	for(i = 0; i < 3; i++)
-	{
-		SPILCD_ShowNum(x+l, y, temp[i], type);
-		l += width;
-	}
-}
-
-void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM picture, OLED_PICTURE_TYPE_ENUM type)
-{       
-	unsigned int i;  
-	unsigned char width, high;
-	unsigned int size = 0;
-	
-	if(type == PICTURE_16_32)
-	{
-		width = 16;
-		high = 32;
-	}
-	else if(type == PICTURE_32_32)
-	{
-		width = 32;
-		high = 32;
+		case NUM_32_48:
+			width = 32;	high = 48;
+			array_p = (unsigned char *)NumberDot3248;
+			break;
+		case NUM_16_22:
+			width = 16;	high = 22;
+			array_p = (unsigned char *)NumberDot1622;
+			break;
+		case PICTURE_32_32:
+			width = 32;	high = 32;
+			array_p = (unsigned char *)PictureDot3232;
+			break;
+		case PICTURE_48_32:
+			width = 48;	high = 32;
+			array_p = (unsigned char *)PictureDot4832;
+			break;
+		case PICTURE_48_48:
+			width = 48;	high = 48;
+			array_p = (unsigned char *)PictureDot4848;
+			break;
 	}
 	
 	size = high*(width/8);
@@ -516,14 +442,34 @@ void SPILCD_ShowPicture(unsigned char x,unsigned char y,OLED_PICTURE_ENUM pictur
 	SPI_CS(0);  
 	//num=num-'0';//得到偏移后的值
 	i=picture*size;
+	
+	SPILCD_WriteArray(i, size, array_p);
+	
+}
 
-	if(type == PICTURE_16_32)
+void LCD_PutNumber(unsigned char x, unsigned char y, int number, OLED_PICTURE_TYPE_ENUM type) 
+{
+	unsigned char l=0;
+	unsigned char i=0;
+	unsigned char temp[3];
+	unsigned char width;
+	
+	if(number > 999)						//最大显示数值为999
+		number = 999;
+	
+	if(type == NUM_32_48)
+		width = 32;
+	else if(type == NUM_16_22)
+		width = 16;
+	
+	temp[0] = number/100%10;
+	temp[1] = number/10%10;
+	temp[2] = number%10;
+	
+	for(i = 0; i < 3; i++)
 	{
-		SPILCD_WriteArray(i, size, PictureDot1632);
-	}
-	else if(type == PICTURE_32_32)
-	{
-		SPILCD_WriteArray(i, size, PictureDot3232);
+		SPILCD_ShowPicture(x+l, y, temp[i], type);
+		l += width;
 	}
 }
 
@@ -626,37 +572,36 @@ void OLED_display_handle(void)
 		case UI_CLOSE:
 			break;
 		case UI_MAIN:
-			LCD_PutNumber(16,5,count,NUM_32_45);
-			SPILCD_Fill(2,54,124,1,0xff);
-			//LCD_PutNumber(0,64,2,NUM_16_32);
-			LCD_PutNumber(0,64,OLED_display.ui_main.air_volum,NUM_16_24);
-			SPILCD_ShowPicture(48,64,OLED_AIR_VOLUM,PICTURE_16_32);
+			LCD_PutNumber(PM2_5_X,PM2_5_Y,count,NUM_32_48);	//PM2.5
+			SPILCD_Fill(LINE_X,LINE_Y,LINE_WIDTH,LINE_HIGH,0xff);
+			LCD_PutNumber(AIR_VOLUM_X,AIR_VOLUM_Y,OLED_display.ui_main.air_volum,NUM_16_22);
+			//SPILCD_ShowPicture(48,64,OLED_AIR_VOLUM,PICTURE_16_32);
 			if(OLED_display.ui_main.wifi_status == OLED_WIFI_OK)
-				SPILCD_ShowPicture(64,64,OLED_WIFI,PICTURE_32_32);
+				SPILCD_ShowPicture(VOLUM_WIFI_X,VOLUM_WIFI_Y,OLED_AIR_VOLUM_WIFI,PICTURE_48_32);
 			else
 			{
 				if(wifi_flag == 0)
 				{
 					wifi_flag = 1;
-					//清空wifi区域的图案
-					SPILCD_Fill(64,64,32,32,0x00);
+					//没有wifi的图案
+					SPILCD_ShowPicture(VOLUM_WIFI_X,VOLUM_WIFI_Y,OLED_AIR_VOLUM,PICTURE_48_32);
 				}
 				else
 				{
 					wifi_flag = 0;
-					SPILCD_ShowPicture(64,64,OLED_WIFI,PICTURE_32_32);
+					SPILCD_ShowPicture(VOLUM_WIFI_X,VOLUM_WIFI_Y,OLED_AIR_VOLUM_WIFI,PICTURE_48_32);
 				}
 			}
-			SPILCD_ShowPicture(96,64,OLED_display.ui_main.mode,PICTURE_32_32);
+			SPILCD_ShowPicture(SMALL_MODE_X,SMALL_MODE_Y,OLED_display.ui_main.mode,PICTURE_32_32);
 			break;
 		case UI_WELCOME:
-			LCD_PutString(16,40,"质享科技");
+			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"质享科技");
 			break;
 		case UI_CONNECTING:
-			LCD_PutString(16,40,"尝试连接");
+			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"尝试连接");
 			break;
 		case UI_WIFI_CONFIG:
-			LCD_PutString(16,40,"正在配网");
+			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"正在配网");
 			break;
 		case UI_WIFI_STATUS:
 			if(OLED_display.switch_time)						//切换界面的时间还没到
@@ -664,22 +609,22 @@ void OLED_display_handle(void)
 				switch(OLED_display.ui_main.wifi_status)
 				{
 					case OLED_WIFI_OK:
-						LCD_PutString(16,40,"连接成功");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接成功");
 						break;
 					case OLED_WIFI_FAIL:
-						LCD_PutString(16,40,"连接失败");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接失败");
 						break;
 					case OLED_WIFI_AUTO_CONNECT:
-						LCD_PutString(16,40,"尝试连接");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"尝试连接");
 						break;
 					case OLED_WIFI_CONNECT_SERVER:
-						LCD_PutString(16,40,"连服务器");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连服务器");
 						break;
 					case OLED_WIFI_RESTORE:
-						LCD_PutString(16,40,"wifi重置");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"wifi重置");
 						break;
 					case OLED_WIFI_CONFIG:
-						LCD_PutString(16,40,"正在配网");
+						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"正在配网");
 						break;
 				}				
 			}
@@ -699,19 +644,19 @@ void OLED_display_handle(void)
 				switch(OLED_display.ui_main.mode)
 				{
 					case OLED_AUTO_MODE:
-						LCD_PutString(16,40,"自动模式");
+						SPILCD_ShowPicture(BIG_MODE_X,BIG_MODE_Y,OLED_AUTO_MODE,PICTURE_48_48);
 						break;
 					case OLED_SLEEP_MODE:
-						LCD_PutString(16,40,"睡眠模式");
+						SPILCD_ShowPicture(BIG_MODE_X,BIG_MODE_Y,OLED_SLEEP_MODE,PICTURE_48_48);
 						break;
 					case OLED_SPEED1_MODE:
-						LCD_PutString(16,40,"一档模式");
+						SPILCD_ShowPicture(BIG_MODE_X,BIG_MODE_Y,OLED_SPEED1_MODE,PICTURE_48_48);
 						break;
 					case OLED_SPEED2_MODE:
-						LCD_PutString(16,40,"二档模式");
+						SPILCD_ShowPicture(BIG_MODE_X,BIG_MODE_Y,OLED_SPEED2_MODE,PICTURE_48_48);
 						break;
 					case OLED_SPEED3_MODE:
-						LCD_PutString(16,40,"三档模式");
+						SPILCD_ShowPicture(BIG_MODE_X,BIG_MODE_Y,OLED_SPEED3_MODE,PICTURE_48_48);
 						break;
 					default:
 						break;
