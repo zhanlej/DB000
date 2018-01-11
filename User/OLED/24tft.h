@@ -50,10 +50,10 @@ typedef enum
 	HINT_STRING_Y = 40,
 	PM2_5_X = 16,
 	PM2_5_Y = 2,
-	LINE_X = 2,
+	LINE_X = 10,
 	LINE_Y = 54,
-	LINE_WIDTH = 124,
-	LINE_HIGH = 2,
+	LINE_WIDTH = 128 - LINE_X*2,
+	LINE_HIGH = 1,
 	AIR_VOLUM_X = 0,
 	AIR_VOLUM_Y = 67,
 	VOLUM_WIFI_X = 48,
@@ -81,6 +81,7 @@ typedef enum
 	OLED_SPEED1_MODE,
 	OLED_SPEED2_MODE,
 	OLED_SPEED3_MODE,
+	OLED_POWER_OFF,
 	//48*32
 	OLED_AIR_VOLUM = 0,
 	OLED_AIR_VOLUM_WIFI,
@@ -91,8 +92,6 @@ typedef enum
 	UI_CLOSE,
 	UI_MAIN,
 	UI_WELCOME,
-	UI_CONNECTING,
-	UI_WIFI_CONFIG,
 	//下面是切换的界面
 	UI_WIFI_STATUS,
 	UI_MODE,
@@ -147,6 +146,7 @@ void OLED_switchtime_set(unsigned int switch_time);		//设置OLED切换界面时间
 void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status);
 void OLED_mode_change(OLED_PICTURE_ENUM mode);
 void OLED_air_set(OLED_AIR_ENUM volum);
+void OLED_pm25_set(unsigned int pm2_5);
 void OLED_display_handle(void);
 void Delayms(unsigned short time);
 void LCD_WriteRegIndex(unsigned char Index);

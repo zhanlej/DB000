@@ -152,7 +152,6 @@ int WifiInit(const char *addr, uint32_t port, char *http_data)
 		if(!AutoLink()) return 0;
 		printf("AutoLink() ok!\r\n");
 	}
-	OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
 
   if(!disableMUX()) return 0;
 	printf("disableMUX() ok!\r\n");

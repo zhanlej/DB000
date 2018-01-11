@@ -537,6 +537,8 @@ unsigned int OLED_switchtime_get(void)		//获取OLED切换界面时间
 void OLED_switchtime_set(unsigned int switch_time)	//设置OLED切换界面时间
 {
 	OLED_display.switch_time = switch_time;
+	if(OLED_display.switch_time == 0)	//如果切屏时间到后立即刷新OLED界面
+		OLED_display_handle();
 }
 
 void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status)
@@ -547,6 +549,11 @@ void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status)
 
 void OLED_mode_change(OLED_PICTURE_ENUM mode)
 {
+	if(mode == OLED_POWER_OFF)	//在关机模式不需要设置OLED上mode图案
+	{
+		OLED_display_handle();
+		return;
+	}
 	OLED_display.ui_main.mode = mode;
 	OLED_ui_switch_set(UI_MODE);
 }
@@ -556,10 +563,14 @@ void OLED_air_set(OLED_AIR_ENUM volum)
 	OLED_display.ui_main.air_volum = volum;
 }
 
+void OLED_pm25_set(unsigned int pm2_5)
+{
+	OLED_display.ui_main.pm2_5 = pm2_5;
+}
+
 void OLED_display_handle(void)
 {
 	static unsigned char wifi_flag = 0;
-	static int count = 0;
 	
 	if(OLED_display.ui_clear)
 	{
@@ -572,7 +583,7 @@ void OLED_display_handle(void)
 		case UI_CLOSE:
 			break;
 		case UI_MAIN:
-			LCD_PutNumber(PM2_5_X,PM2_5_Y,count,NUM_32_48);	//PM2.5
+			LCD_PutNumber(PM2_5_X,PM2_5_Y,OLED_display.ui_main.pm2_5,NUM_32_48);	//PM2.5
 			SPILCD_Fill(LINE_X,LINE_Y,LINE_WIDTH,LINE_HIGH,0xff);
 			LCD_PutNumber(AIR_VOLUM_X,AIR_VOLUM_Y,OLED_display.ui_main.air_volum,NUM_16_22);
 			//SPILCD_ShowPicture(48,64,OLED_AIR_VOLUM,PICTURE_16_32);
@@ -597,45 +608,52 @@ void OLED_display_handle(void)
 		case UI_WELCOME:
 			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"质享科技");
 			break;
-		case UI_CONNECTING:
-			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"尝试连接");
-			break;
-		case UI_WIFI_CONFIG:
-			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"正在配网");
-			break;
 		case UI_WIFI_STATUS:
-			if(OLED_display.switch_time)						//切换界面的时间还没到
-			{			
-				switch(OLED_display.ui_main.wifi_status)
-				{
-					case OLED_WIFI_OK:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接成功");
-						break;
-					case OLED_WIFI_FAIL:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接失败");
-						break;
-					case OLED_WIFI_AUTO_CONNECT:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"尝试连接");
-						break;
-					case OLED_WIFI_CONNECT_SERVER:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连服务器");
-						break;
-					case OLED_WIFI_RESTORE:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"wifi重置");
-						break;
-					case OLED_WIFI_CONFIG:
-						LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"正在配网");
-						break;
-				}				
-			}
-			else																		//到时间后判断如果在关机状态就切换到关屏界面，否则切换到主菜单界面
+			if(OLED_display.ui_main.wifi_status == OLED_WIFI_OK || OLED_display.ui_main.wifi_status == OLED_WIFI_FAIL)
 			{
-				if(OLED_display.ui_main.air_volum == OLED_AIR_0)
-				{
-					OLED_uitype_change(UI_CLOSE);
+				if(OLED_display.switch_time)						//切换界面的时间还没到
+				{			
+					switch(OLED_display.ui_main.wifi_status)
+					{
+						case OLED_WIFI_OK:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接成功");
+							break;
+						case OLED_WIFI_FAIL:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接失败");
+							break;
+						default:
+							break;
+					}				
 				}
-				else
-					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+				else																		//到时间后判断如果在关机状态就切换到关屏界面，否则切换到主菜单界面
+				{
+					if(OLED_display.ui_main.air_volum == OLED_AIR_0)
+					{
+						OLED_uitype_change(UI_CLOSE);
+					}
+					else
+						OLED_uitype_change(UI_MAIN);		//OLED切换到主界面
+				}
+			}
+			else
+			{
+				switch(OLED_display.ui_main.wifi_status)
+					{
+						case OLED_WIFI_AUTO_CONNECT:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"尝试连接");
+							break;
+						case OLED_WIFI_CONNECT_SERVER:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连服务器");
+							break;
+						case OLED_WIFI_RESTORE:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"wifi重置");
+							break;
+						case OLED_WIFI_CONFIG:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"正在配网");
+							break;
+						default:
+							break;
+					}				
 			}
 			break;
 		case UI_MODE:
@@ -671,8 +689,6 @@ void OLED_display_handle(void)
 			}
 			break;
 	}
-	
-	count++;
 }
 
 void SPILCD_Fill(unsigned short xsta,unsigned short ysta,unsigned short xlen,unsigned short ylen,unsigned short color)

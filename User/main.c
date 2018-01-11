@@ -111,6 +111,7 @@ int main()
 
   while(1)
   {
+		OLED_pm25_set(AQI_10);					//设置OLED上pm2.5的数值
 		OLED_display_handle();					//OLED屏幕显示函数
 		
 		if(auto_flag == 1)
@@ -229,6 +230,18 @@ void GPIO_Configuration(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;     //上拉输入
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 	/*   物理按键   */
+	
+	/*   物理指示灯   */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;     //POWER KEY LED
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_ResetBits(GPIOB, GPIO_Pin_6);
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;     //MODE KEY LED
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_SetBits(GPIOB, GPIO_Pin_7);
+	/*   物理指示灯   */
 	
 	/*   蜂鸣器   */
 	//在beep_init()中配置
@@ -1049,12 +1062,12 @@ void ModeCountrol(void)
 		case '4':
 			OLED_mode_change(OLED_SPEED3_MODE);
 			break;
-//		case '0':
-//			OLED_mode_change(OLED_AUTO_MODE);
-//			break;
-//		default:
-//			OLED_mode_change(OLED_AUTO_MODE);
-//			break;
+		case '0':
+			OLED_mode_change(OLED_POWER_OFF);
+			break;
+		default:
+			OLED_mode_change(OLED_POWER_OFF);
+			break;
 	}
 	
 	//控制蜂鸣器
