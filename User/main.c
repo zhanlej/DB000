@@ -240,7 +240,7 @@ void GPIO_Configuration(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;     //MODE KEY LED
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOB, GPIO_Pin_7);
+  GPIO_ResetBits(GPIOB, GPIO_Pin_7);
 	/*   物理指示灯   */
 	
 	/*   蜂鸣器   */
@@ -723,6 +723,14 @@ void TIM3_IRQHandler(void)   //TIM3中断
 			unsigned int switch_time = OLED_switchtime_get();
 			switch_time--;
 			OLED_switchtime_set(switch_time);
+		}
+		
+		//减OLED亮屏时间
+		if(OLED_lighttime_get() > 0)
+		{
+			unsigned int light_time = OLED_lighttime_get();
+			light_time--;
+			OLED_lighttime_set(light_time);
 		}
 
     tim3_cnt++;

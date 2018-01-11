@@ -517,6 +517,8 @@ void OLED_uitype_change(OLED_UI_ENUM ui_type)
 {
 	OLED_display.ui_type = ui_type;
 	OLED_display.ui_clear = 1;				//需要清屏操作
+	OLED_display.screen_light = 1;							//每次切换界面都重置一下屏幕亮屏标志
+	OLED_display.light_time = OLED_LIGHT_TIME;	//每次切换界面都重置一下屏幕亮屏时间
 }
 
 void OLED_ui_switch_set(OLED_UI_ENUM ui)	//OLED切换界面设置
@@ -539,6 +541,21 @@ void OLED_switchtime_set(unsigned int switch_time)	//设置OLED切换界面时间
 	OLED_display.switch_time = switch_time;
 	if(OLED_display.switch_time == 0)	//如果切屏时间到后立即刷新OLED界面
 		OLED_display_handle();
+}
+
+unsigned int OLED_lighttime_get(void)		//获取OLED亮屏时间
+{
+	return OLED_display.light_time;
+}
+
+void OLED_lighttime_set(unsigned int light_time)	//设置OLED亮屏时间
+{
+	OLED_display.light_time = light_time;
+	if(OLED_display.light_time == 0)	//如果切屏时间到后立即刷新OLED界面
+	{
+		OLED_display.screen_light = 0;
+		OLED_uitype_change(UI_CLOSE);
+	}
 }
 
 void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status)
