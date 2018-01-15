@@ -40,7 +40,7 @@
 #define BRRED						0XFC07 //棕红色
 #define GRAY						0X8430 //灰色
 
-#define OLED_LIGHT_TIME 60				//OLED亮屏时间，单位为秒
+#define OLED_LIGHT_TIME 10				//OLED亮屏时间，单位为秒
 #define OLED_SWITCH_TIME 2				//OLED切换屏幕时间，单位为秒
 
 						
@@ -145,6 +145,7 @@ unsigned int OLED_switchtime_get(void);								//获取OLED切换界面时间
 void OLED_switchtime_set(unsigned int switch_time);		//设置OLED切换界面时间
 unsigned int OLED_lighttime_get(void);								//获取OLED亮屏时间
 void OLED_lighttime_set(unsigned int light_time);			//设置OLED亮屏时间
+unsigned int OLED_screenlight_get(void);							//获取OLED亮屏标志，判断当前是否在息屏状态
 void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status);
 void OLED_mode_change(OLED_PICTURE_ENUM mode);
 void OLED_air_set(OLED_AIR_ENUM volum);

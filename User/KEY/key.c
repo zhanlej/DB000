@@ -7,6 +7,7 @@
 #include "stdio.h"
 #include "aqi.h"
 //#include "DSHCHO.h"
+#include "24tft.h"
 
 //unsigned char wait_send_press;
 //int press_len;
@@ -123,11 +124,18 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		else if(KeyCode == KEY_UP_Power)
 		{
 			printf("POWER key up\r\n");
-			if(*mqtt_mode == '0')
-				PowerOnOff(1);
-			else
-				PowerOnOff(0);
-//			SavePressLog();
+			if(OLED_screenlight_get())
+			{
+				if(*mqtt_mode == '0')
+					PowerOnOff(1);
+				else
+					PowerOnOff(0);
+//				SavePressLog();
+			}
+			else	//如果是在息屏状态下，按下按键先跳转到主菜单
+			{
+				OLED_uitype_change(UI_MAIN);
+			}
 		}
 	}
 	else if(key_type == KEY_TPYE_MODE)
@@ -140,31 +148,38 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 		else if(KeyCode == KEY_UP_Power)
 		{
 			printf("MODE key up\r\n");
-			switch(*mqtt_mode)
+			if(OLED_screenlight_get())
 			{
-				case 'A':
-					strcpy(mqtt_mode,"1");
-					ModeCountrol();
-					break;
-				case '1':
-					strcpy(mqtt_mode,"2");
-					ModeCountrol();
-					break;
-				case '2':
-					strcpy(mqtt_mode,"3");
-					ModeCountrol();
-					break;
-				case '3':
-					strcpy(mqtt_mode,"4");
-					ModeCountrol();
-					break;
-				case '4':
-					strcpy(mqtt_mode,"A");
-					ModeCountrol();
-					break;
+				switch(*mqtt_mode)
+				{
+					case 'A':
+						strcpy(mqtt_mode,"1");
+						ModeCountrol();
+						break;
+					case '1':
+						strcpy(mqtt_mode,"2");
+						ModeCountrol();
+						break;
+					case '2':
+						strcpy(mqtt_mode,"3");
+						ModeCountrol();
+						break;
+					case '3':
+						strcpy(mqtt_mode,"4");
+						ModeCountrol();
+						break;
+					case '4':
+						strcpy(mqtt_mode,"A");
+						ModeCountrol();
+						break;
+				}
+//				ModeCountrol();
+//				SavePressLog();
 			}
-//			ModeCountrol();
-//			SavePressLog();
+			else	//如果是在息屏状态下，按下按键先跳转到主菜单
+			{
+				OLED_uitype_change(UI_MAIN);
+			}
 		}
 	}
 	
@@ -172,10 +187,17 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 	if(KeyCode == KEY_LONG_Power && s_Powerkey.IsLong == 1 && s_Modekey.IsLong == 1)
 	{
 		//设置组合键的flag
-		s_Powerkey.IsComb = 1;
-		s_Modekey.IsComb = 1;
-		printf("Combine key - wifi restore!\r\n");
-		key_flag.Comb_flag = 1;
+		if(OLED_screenlight_get())
+		{
+			s_Powerkey.IsComb = 1;
+			s_Modekey.IsComb = 1;
+			printf("Combine key - wifi restore!\r\n");
+			key_flag.Comb_flag = 1;
+		}
+		else	//如果是在息屏状态下，按下按键先跳转到主菜单
+		{
+			OLED_uitype_change(UI_MAIN);
+		}
 	}
 }
 

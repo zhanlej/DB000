@@ -40,6 +40,8 @@
 #include "PMS7003.h"
 //add for OLED
 #include "24tft.h"
+//add for LED
+#include "led.h"
 
 //指针函数定义
 void (*trans_module_restart)(void);
@@ -59,7 +61,7 @@ volatile unsigned char fan_level = 0; //自动模式下的速度档位
 CONNECT_STATUS_ENUM All_State = initialWAITOK;
 char http_buf[1];	//GPRS模块通过http协议获取的数据
 char topic_group[30];
-char deviceID[20] = "200025";
+char deviceID[20] = "200027";
 MQTTString topicString = MQTTString_initializer;
 unsigned char mqtt_buf[MQTT_SEND_SIZE];   
 int mqtt_buflen = sizeof(mqtt_buf); 
@@ -96,12 +98,13 @@ int main()
 	Panakey_Init();									//物理按键外部中断初始化
 	RTC_Init(2017, 1, 1, 0, 0, 0);	//实时时钟初始化，用来限制用户超过租期不能使用。
 	OLED_init();										//OLED模块初始化
+	led_init();											//LED初始化
 
 	RGB_Set(WS2812B_CUTDOWN, 4);		//关闭空气质量灯
 	SPILCD_Clear(0x00);							//OLED清屏
 	beep_on(BEEP_ON);								//蜂鸣器开机
 	
-	OLED_display_handle();					//OLED屏幕显示函数
+	OLED_uitype_change(UI_WELCOME);					//OLED屏幕显示函数
 	printf("APP V1.0!!!!\r\n");
 	printf("\r\n########### 烧录日期: "__DATE__" - "__TIME__"\r\n");
 	STMFLASH_Read(0x1ffff7e8,(u16*)U_ID,6);	//读取MCU_ID号
@@ -235,12 +238,12 @@ void GPIO_Configuration(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;     //POWER KEY LED
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_ResetBits(GPIOB, GPIO_Pin_6);
+  GPIO_SetBits(GPIOB, GPIO_Pin_6);
 	
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;     //MODE KEY LED
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_ResetBits(GPIOB, GPIO_Pin_7);
+  GPIO_SetBits(GPIOB, GPIO_Pin_7);
 	/*   物理指示灯   */
 	
 	/*   蜂鸣器   */
@@ -990,12 +993,14 @@ void PowerOnOff(unsigned char on_off)
 {
 	if(on_off)
 	{
+		led_handle(LED_POWER_ON);
 		strcpy(mqtt_mode, "A");
     printf("power on, mqtt_mode = %s\r\n", mqtt_mode);
-		OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
+		//OLED_uitype_change(UI_MAIN);	//OLED切换到主界面
 	}
 	else
 	{
+		led_handle(LED_POWER_OFF);
 		strcpy(mqtt_mode, "0");
     printf("power messge is error, mqtt_mode = %s\r\n", mqtt_mode);
 		OLED_uitype_change(UI_CLOSE);	//OLED切换到息屏

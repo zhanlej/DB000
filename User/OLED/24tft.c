@@ -516,18 +516,21 @@ void OLED_display_init(void)
 void OLED_uitype_change(OLED_UI_ENUM ui_type)
 {
 	OLED_display.ui_type = ui_type;
-	OLED_display.ui_clear = 1;				//需要清屏操作
-	OLED_display.screen_light = 1;							//每次切换界面都重置一下屏幕亮屏标志
-	OLED_display.light_time = OLED_LIGHT_TIME;	//每次切换界面都重置一下屏幕亮屏时间
+	OLED_display.ui_clear = 1;										//需要清屏操作
+	OLED_display.screen_light = 1;								//每次切换界面都重置一下屏幕亮屏标志
+	if(ui_type == UI_CLOSE)												//当要切换到UI_CLOSE界面时将息屏时间设置为0
+		OLED_display.light_time = 0;
+	else
+		OLED_display.light_time = OLED_LIGHT_TIME;	//每次切换界面都重置一下屏幕亮屏时间
+	OLED_display_handle();
 }
 
 void OLED_ui_switch_set(OLED_UI_ENUM ui)	//OLED切换界面设置
 {
 	if(ui == UI_WIFI_STATUS || ui == UI_MODE)		//只有这两种情况是需要界面切换的
 	{
-		OLED_uitype_change(ui);	//OLED切换到对应的界面
 		OLED_display.switch_time = OLED_SWITCH_TIME;
-		OLED_display_handle();
+		OLED_uitype_change(ui);	//OLED切换到对应的界面
 	}
 }
 
@@ -553,9 +556,14 @@ void OLED_lighttime_set(unsigned int light_time)	//设置OLED亮屏时间
 	OLED_display.light_time = light_time;
 	if(OLED_display.light_time == 0)	//如果切屏时间到后立即刷新OLED界面
 	{
-		OLED_display.screen_light = 0;
 		OLED_uitype_change(UI_CLOSE);
+		OLED_display.screen_light = 0;
 	}
+}
+
+unsigned int OLED_screenlight_get(void)		//获取OLED亮屏标志，判断当前是否在息屏状态
+{
+	return OLED_display.screen_light;
 }
 
 void OLED_wifi_status_set(OLED_WIFI_STATUS_ENUM status)
@@ -568,7 +576,7 @@ void OLED_mode_change(OLED_PICTURE_ENUM mode)
 {
 	if(mode == OLED_POWER_OFF)	//在关机模式不需要设置OLED上mode图案
 	{
-		OLED_display_handle();
+		OLED_ui_switch_set(UI_CLOSE);
 		return;
 	}
 	OLED_display.ui_main.mode = mode;
