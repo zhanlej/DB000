@@ -40,7 +40,7 @@
 #define BRRED						0XFC07 //棕红色
 #define GRAY						0X8430 //灰色
 
-#define OLED_LIGHT_TIME 10				//OLED亮屏时间，单位为秒
+#define OLED_LIGHT_TIME 60				//OLED亮屏时间，单位为秒
 #define OLED_SWITCH_TIME 2				//OLED切换屏幕时间，单位为秒
 
 						

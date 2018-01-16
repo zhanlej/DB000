@@ -132,10 +132,23 @@ int SmartConfig(void)
 
 int WifiInit(const char *addr, uint32_t port, char *http_data)
 {
+	unsigned long start;
+	
 	WIFI_RST_PIN = 1; //将RST置高
-	delay(1000); //延时等待一会
-	if(!restart()) return 0;
-  printf("restart() ok!\r\n");
+	//delay(2000); //延时等待一会
+	start = millis();
+	while (millis() - start < 3000)
+	{
+		if (eAT())
+		{
+			printf("AT is OK!\r\n");
+			delay(1000); /* Waiting for stable */
+			break;
+		}
+		delay(100);
+	}
+//	if(!restart()) return 0;
+//  printf("restart() ok!\r\n");
 	if(!setOprToStationSoftAP()) return 0;
   printf("setOprToStationSoftAP() ok!\r\n");
 	
@@ -552,7 +565,7 @@ int sATCWMODE(uint8_t mode)
 //    return 0;
 //  }
 //  return 1;
-	return recvFind("OK", TIME_OUT);
+	return recvFind("OK", 300);
 }
 
 int sATCWAUTOCONN(uint8_t mode)
@@ -750,18 +763,18 @@ void WIFI_restart(void)
 	WIFI_RST_PIN = 0;
 	delay(1000);
 	WIFI_RST_PIN = 1;
-	delay(2000);
-    start = millis();
-    while (millis() - start < 3000)
-    {
-      if (eAT())
-      {
-        delay(1500); /* Waiting for stable */
-        printf("WIFI_restart() is OK!\r\n");
-				return;
-      }
-      delay(100);
-    }
+	//delay(2000);
+	start = millis();
+	while (millis() - start < 3000)
+	{
+		if (eAT())
+		{
+			delay(1000); /* Waiting for stable */
+			printf("WIFI_restart() is OK!\r\n");
+			return;
+		}
+		delay(100);
+	}
 }
 	
 int esp8266_send(const uint8_t *buffer, uint32_t len)

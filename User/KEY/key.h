@@ -58,22 +58,14 @@ typedef struct
 
 //extern BUTTON_T s_Powerkey;
 extern KEY_FLAG_T key_flag;
-extern char mqtt_mode[2]; //通过mqtt接收到的指令
-//extern short All_State;	//为了过滤正常连接时多次按键产生的数组
-//extern volatile int Conce_PM2_5;       // PM2.5浓度
-//extern volatile int Conce_PM10;        // PM10浓度
-//extern volatile int AQI_2_5;
-//extern volatile int AQI_10;
-//extern volatile int AQI_Max;								//MAX(AQI_2_5,AQI_10)
-
-//extern unsigned char wait_send_press;
+extern unsigned char wait_send_press;
 //extern int press_len;
-//extern char press_buf[PRESS_SIZE][2];
-//extern u32 press_time_log[PRESS_SIZE];
-////extern u32 press_HCHO[PRESS_SIZE];
-//extern u32 press_C1[PRESS_SIZE];
-//extern u32 press_C2[PRESS_SIZE];
-//extern u32 press_AQI[PRESS_SIZE];
+extern char press_buf[2];
+extern u32 press_time_log;
+//extern u32 press_HCHO[PRESS_SIZE];
+extern u32 press_C1;
+extern u32 press_C2;
+extern u32 press_AQI;
 
 void Panakey_Init(void);
 void Pannelkey_Polling(void);

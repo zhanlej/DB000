@@ -9,14 +9,22 @@
 //#include "DSHCHO.h"
 #include "24tft.h"
 
-//unsigned char wait_send_press;
+extern char mqtt_mode[2]; //通过mqtt接收到的指令
+//extern short All_State;	//为了过滤正常连接时多次按键产生的数组
+extern volatile int Conce_PM2_5;       // PM2.5浓度
+extern volatile int Conce_PM10;        // PM10浓度
+extern volatile int AQI_2_5;
+extern volatile int AQI_10;
+extern volatile int AQI_Max;								//MAX(AQI_2_5,AQI_10)
+
+unsigned char wait_send_press;
 //int press_len;
-//char press_buf[PRESS_SIZE][2];
-//u32 press_time_log[PRESS_SIZE];
-////u32 press_HCHO[PRESS_SIZE];
-//u32 press_C1[PRESS_SIZE];
-//u32 press_C2[PRESS_SIZE];
-//u32 press_AQI[PRESS_SIZE];
+char press_buf[2];
+u32 press_time_log;
+//u32 press_HCHO[PRESS_SIZE];
+u32 press_C1;
+u32 press_C2;
+u32 press_AQI;
 
 KEY_FLAG_T key_flag;	//按键相关标示结构体
 BUTTON_T s_Powerkey;	//power按键的结构体
@@ -84,8 +92,8 @@ void Panakey_Init(void)
   PanakeyVar_Init();                /* 初始化按键硬件 */
 }
 
-//void SavePressLog(void)
-//{
+void SavePressLog(void)
+{
 //	int tmp_press_time = 0;
 //	
 //	//筛选在断网期间连续多次物理按键的情况，如果两次物理按键间隔不超过1S则最后一次的物理按键覆盖前一次的物理按键
@@ -97,20 +105,20 @@ void Panakey_Init(void)
 //			press_len--;
 //		}
 //	}
-//	
-//	//if (Fifo_canPush(&recv_fifo1)) Fifo_Push(&recv_fifo1, *mqtt_mode);
-//	//将按下按键后的状态和按下按键的时间记录在下面的数组中
+	
+	//if (Fifo_canPush(&recv_fifo1)) Fifo_Push(&recv_fifo1, *mqtt_mode);
+	//将按下按键后的状态和按下按键的时间记录在下面的数组中
 //	if(All_State == sendPM) press_len = 0;
 //	else if(press_len >= PRESS_SIZE) press_len = PRESS_SIZE-1;	//当数组满的时候新的数据只替换末尾的一个数据
-//	strcpy(press_buf[press_len], mqtt_mode);
-//	press_time_log[press_len] = RTC_GetCounter();
-//	//press_HCHO[press_len] = Conce_HCHO;
-//	press_C1[press_len] = Conce_PM2_5;
-//	press_C2[press_len] = Conce_PM10;			
-//	press_AQI[press_len] = AQI_Max;			
+	strcpy(press_buf, mqtt_mode);
+	press_time_log = RTC_GetCounter();
+	//press_HCHO[press_len] = Conce_HCHO;
+	press_C1 = Conce_PM2_5;
+	press_C2 = Conce_PM10;			
+	press_AQI = AQI_Max;			
 //	press_len++;
-//	wait_send_press = 1;
-//}
+	wait_send_press = 1;
+}
 
 void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 {
@@ -130,7 +138,8 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 					PowerOnOff(1);
 				else
 					PowerOnOff(0);
-//				SavePressLog();
+				
+				SavePressLog();
 			}
 			else	//如果是在息屏状态下，按下按键先跳转到主菜单
 			{
@@ -174,7 +183,7 @@ void Pannelkey_Put(KEY_TPYE_ENUM key_type, unsigned char KeyCode)
 						break;
 				}
 //				ModeCountrol();
-//				SavePressLog();
+				SavePressLog();
 			}
 			else	//如果是在息屏状态下，按下按键先跳转到主菜单
 			{

@@ -597,13 +597,13 @@ int Public_Open(int time)
 
 void Transmission_State()
 {
-//	//发送断网期间物理按键记录
-//	if(wait_send_press == 1)
-//	{
-//		wait_send_press = 0;
-//		printf("send press!\r\n");
-//		SendJson(PRESS_MODE);
-//	}
+	//发送断网期间物理按键记录
+	if(wait_send_press == 1)
+	{
+		wait_send_press = 0;
+		printf("send press!\r\n");
+		SendJson(PRESS_MODE);
+	}
 	
 	//发送心跳包
 	if(ping_flag == 1)
