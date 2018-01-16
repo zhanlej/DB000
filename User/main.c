@@ -100,7 +100,7 @@ int main()
 	OLED_init();										//OLED模块初始化
 	led_init();											//LED初始化
 
-	RGB_Set(WS2812B_CUTDOWN, 4);		//关闭空气质量灯
+	//RGB_Set(WS2812B_CUTDOWN, 4);		//关闭空气质量灯
 	SPILCD_Clear(0x00);							//OLED清屏
 	beep_on(BEEP_ON);								//蜂鸣器开机
 	
@@ -688,7 +688,7 @@ void TIM3_IRQHandler(void)   //TIM3中断
 		if(tim3_cnt % AUTOMODE_INTERVAL == 0)
 		{
 			auto_flag = 1;
-			AirLEDControl();
+			//AirLEDControl();
 		}
 		
 //		if((tim3_cnt+1) % COUNT_INTERVAL == 0)	//要提前1S发送甲醛传感器的命令
@@ -1087,7 +1087,7 @@ void ModeCountrol(void)
 	beep_on(BEEP_CMD);
 	
 	//如果是在待机状态或睡眠模式下关闭空气质量灯
-	AirLEDControl();
+	//AirLEDControl();
 }
 
 void SetMotorLevel(int cmd)

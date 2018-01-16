@@ -213,6 +213,8 @@ void ILI9325_CMO24_Initial(void)
 	WriteComm(0x12);
 
 	WriteComm(0xaf); 
+	
+	SPI_CS(1);
 }
 
 //函数名：SPILCD_Init
@@ -250,7 +252,7 @@ void SPILCD_Clear(unsigned short Color)
 	WriteComm(0x00); 
 	WriteComm(95); 	
 //	SPILCD_SetWindow(0,SPILCD_W-1,0,SPILCD_H-1);	
-SPI_CS(0);	
+	SPI_CS(0);	
 	for(x=0;x<128;x++)
 		for(y=0;y<48;y++)
 	{
@@ -306,19 +308,21 @@ void SPILCD_ShowChar(unsigned char x,unsigned char y,unsigned char num)
 	num=num-' ';//得到偏移后的值
 	i=num*16;
 
-		for(pos=0;pos<size;pos++)
-		{
+	for(pos=0;pos<size;pos++)
+	{
 
-			temp=nAsciiDot[i+pos];	//调通调用艺术字体
-			for(t=0;t<8;t++)
-		   {                 
-		      if(temp&0x80)
-						LCD_WriteoneSPI(0xff);
-					else 
-						LCD_WriteoneSPI(0x00);
-		      temp<<=1; 
-		    }
-		}	 
+		temp=nAsciiDot[i+pos];	//调通调用艺术字体
+		for(t=0;t<8;t++)
+		 {                 
+				if(temp&0x80)
+					LCD_WriteoneSPI(0xff);
+				else 
+					LCD_WriteoneSPI(0x00);
+				temp<<=1; 
+			}
+	}	 
+	
+	SPI_CS(1);
 }  
 void DrawPixel(u16 x, u16 y, int Color)
 {
@@ -337,7 +341,7 @@ void PutGB1616(unsigned char x, unsigned char  y, unsigned char c[2])
 	WriteComm(0x0+y+15); 
 //	SPILCD_SetWindow(0,SPILCD_W-1,0,SPILCD_H-1);	
 	lcd_RS(1);
-SPI_CS(0);	
+	SPI_CS(0);	
 
 // 	SPILCD_SetWindow(0,SPILCD_H-1,0,SPILCD_W-1);
 	for (k=0;k<64;k++) { //64标示自建汉字库中的个数，循环查询内码
@@ -360,8 +364,11 @@ SPI_CS(0);
 				else x=x+8;
 		  }
 		}  
-	  }	
-	}
+  }
+
+	SPI_CS(1);
+}
+
 void LCD_PutString(unsigned char x, unsigned char y, unsigned char *s) 
 {
 	unsigned char l=0;
@@ -444,6 +451,7 @@ void SPILCD_ShowPicture(unsigned char x,unsigned char y,unsigned int picture, OL
 	i=picture*size;
 	
 	SPILCD_WriteArray(i, size, array_p);
+	SPI_CS(1); 
 	
 }
 

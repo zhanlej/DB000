@@ -27,7 +27,7 @@ typedef enum
 #define PM2_5_LEVEL1 50
 #define PM2_5_LEVEL2 100
 #define PM2_5_LEVEL3 150
-#define LEVEL_OFFSET 10
+#define LEVEL_OFFSET 5
 
 void TRANS_USART(u32 baudRate);
 void RCC_Configuration(void);
