@@ -69,6 +69,7 @@ int len = 0;
 int rc;
 char payload[MQTT_SEND_SIZE] = "testmessage\n";	//MQTT发布出去的数据
 int payloadlen;
+unsigned char pingresp_flag = 0;								//发出心跳包后等待pingresp标志
 
 unsigned char send_flag = 0;
 unsigned char ping_flag = 0;
@@ -392,9 +393,16 @@ void TIM3_Int_Init(u16 arr, u16 psc)
 void wifi_status_set(unsigned char status)
 {
 	if(status == OLED_WIFI_OK)
+	{
+		//连接上网络的声音
+		beep_on(BEEP_CONNECT);
 		All_State = sendPM;
+	}
 	else
+	{
+		pingresp_flag = 0;
 		All_State = DISCNNECT;
+	}
 	
 	OLED_wifi_status_set(status);
 }
@@ -553,17 +561,6 @@ int MQTT_Sub0Pub1()
   printf("pubtopic = %s", topic_group);
   topicString.cstring = topic_group;
 	
-	//连接上网络的声音
-	beep_on(BEEP_CONNECT);
-
-	//记录连接时间
-	if(gprs_connect_cnt == 0)
-		gprs_connect_time[gprs_connect_cnt] = UNIXtime2date(RTC_GetCounter());
-	else
-		gprs_connect_time[gprs_connect_cnt] = RTC_GetCounter() - break_time;
-	gprs_connect_cnt++;
-	if(gprs_connect_cnt >= GPRS_STATE_TIME_SIZE)	gprs_connect_cnt = 0;
-	
 	//发送断网期间的物理按键记录，如果没有操作物理按键则发送mode数据。
 	SendJson(CONNECTION_MODE);
 //	//紧接着发送地理位置信息。
@@ -617,20 +614,24 @@ void Transmission_State()
 	if(ping_flag == 1)
 	{
 		ping_flag = 0;
-		if(!SendPingPack(5))
+		if(pingresp_flag)
 		{
 			printf("pingpack is FAILED!\r\n");
-			//记录断网时间
-			break_time = RTC_GetCounter();
-			gprs_break_time[gprs_break_cnt] = UNIXtime2date(break_time);
-			//gprs_break_time[gprs_break_cnt] = RTC_GetCounter();
-			
-			gprs_break_cnt++;
-			if(gprs_break_cnt >= GPRS_STATE_TIME_SIZE)	gprs_break_cnt = 0;
-			//重启GPRS模块
 			wifi_status_set(OLED_WIFI_FAIL);
 			return;
 		}
+		else
+		{
+			SendPingPack();
+		}
+//		if(!SendPingPack(5))
+//		{
+//			printf("pingpack is FAILED!\r\n");
+
+//			//重启GPRS模块
+//			wifi_status_set(OLED_WIFI_FAIL);
+//			return;
+//		}
 	}
 
   /* transport_getdata() has a built-in 1 second timeout,
@@ -657,6 +658,11 @@ void Transmission_State()
 		len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, 0, 0, 0, 0, topicString, (unsigned char*)payload, payloadlen);
     trans_module_send(mqtt_buf, len);
   }
+	else if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
+	{
+		printf("rc = %d, pingreq is successful!\r\n", rc);
+		pingresp_flag = 0;
+	}
 
 //	if(internal_flag == 1)	//internal_flag必须在send_flag之前处理，否则数组最后一位就为0
 //	{
@@ -759,30 +765,27 @@ void SendJson(u8 mode)
 	printf("mode = %d, SendJson len = %d\r\n", mode, len);
 }
 
-int SendPingPack(int times)
+void SendPingPack(void)
 {
-	int i = 0;
-	for(i=0;i<times;i++)
-	{
-		memset(mqtt_buf, 0, sizeof(mqtt_buf));
-		len = MQTTSerialize_pingreq(mqtt_buf, 100);
-		trans_module_send(mqtt_buf, len);
+	memset(mqtt_buf, 0, sizeof(mqtt_buf));
+	len = MQTTSerialize_pingreq(mqtt_buf, 100);
+	trans_module_send(mqtt_buf, len);
+	
+	pingresp_flag = 1;
 
-		//mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-		memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
-		delay(1000);
-		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
-		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
-		{
-			printf("rc = %d, pingreq is successful!\r\n", rc);
-			return 1;
-		}
-		else
-		{
-			printf("rc = %d, pingreq is failed!\r\n", rc);
-		}
-	}
-	return 0;
+//		//mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+//		memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+//		delay(1000);
+//		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
+//		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
+//		{
+//			printf("rc = %d, pingreq is successful!\r\n", rc);
+//			return 1;
+//		}
+//		else
+//		{
+//			printf("rc = %d, pingreq is failed!\r\n", rc);
+//		}
 }
 
 void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* return_len)
@@ -899,12 +902,6 @@ void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* r
 			RTC_SetCounter(rtc_count);	//设置RTC计数器的值
 			RTC_WaitForLastTask();	//等待最近一次对RTC寄存器的写操作完成
     }
-		
-		//返回断网记录数据
-		if(cJSON_GetObjectItem(mqtt_recv_root, "GPRS_RECORD") != NULL)
-		{
-			SendJson(GPRS_RECORD_MODE);
-		}
 		
 		//处理firmware update数据
 		firmware_obj = cJSON_GetObjectItem(mqtt_recv_root, "firmware");

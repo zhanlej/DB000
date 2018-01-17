@@ -5,7 +5,6 @@
 #define GEO_MODE 1
 #define SENDDATA_MODE 2
 #define PRESS_MODE 3
-#define GPRS_RECORD_MODE 4
 
 //发送数据的时间间隔
 #define CLOSE_INTERVAL 600
@@ -34,12 +33,6 @@ extern int AQI1[CLOSE_INTERVAL/COUNT_INTERVAL];
 extern int AQI2[CLOSE_INTERVAL/COUNT_INTERVAL];
 extern int AQI[CLOSE_INTERVAL/COUNT_INTERVAL];
 extern int L[CLOSE_INTERVAL/COUNT_INTERVAL];
-//断网测试记录用
-extern unsigned char gprs_connect_cnt;
-extern unsigned char gprs_break_cnt;
-extern int gprs_connect_time[GPRS_STATE_TIME_SIZE];
-extern int gprs_break_time[GPRS_STATE_TIME_SIZE];
-extern u32 break_time;
 
 void group_json(unsigned char mode);
 

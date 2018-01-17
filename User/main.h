@@ -44,7 +44,7 @@ int Public_Open(int time);	//发布开机指令
 void Transmission_State(void);
 void SendJson(u8 mode);
 void SendPress(void);
-int SendPingPack(int times);
+void SendPingPack(void);
 void recv_mqtt(unsigned char* recv_data, int data_len, char* return_data, int* return_len);	//接收mqtt的数据
 
 void PowerOnOff(unsigned char on_off);		//控制开关

@@ -1,7 +1,7 @@
 #ifndef __SERIALPORT_H__
 #define __SERIALPORT_H__
 
-#define _SS_MAX_RX_BUFF 2048
+#define _SS_MAX_RX_BUFF 1024
 
 #define INT_TYPE 0
 #define STRING_TYPE 1

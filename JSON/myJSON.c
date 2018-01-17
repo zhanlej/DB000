@@ -34,12 +34,6 @@ int AQI1[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 int AQI2[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 int AQI[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
 int L[CLOSE_INTERVAL / COUNT_INTERVAL] = {0};
-//断网测试记录用
-unsigned char gprs_connect_cnt = 0;
-unsigned char gprs_break_cnt = 0;
-int gprs_connect_time[GPRS_STATE_TIME_SIZE];
-int gprs_break_time[GPRS_STATE_TIME_SIZE];
-u32 break_time;
 
 void SendDataMode_group(cJSON *root)
 {
@@ -172,21 +166,6 @@ void PressMode_group(cJSON *root)
 //  press_len = 0;
 }
 
-void GprsRecordMode_group(cJSON *root)
-{
-  //eATCSQ(&sim_csq);	//获取当前csq值
-  //cJSON_AddNumberToObject(root, "CSQ", sim_csq);
-  cJSON_AddNumberToObject(root, "current_date", UNIXtime2date(RTC_GetCounter()));
-  cJSON_AddNumberToObject(root, "current_time", RTC_GetCounter());
-  //cJSON_AddNumberToObject(root, "time_out", UNIXtime2date(BKP_ReadBackupRegister(BKP_DR2) +  (BKP_ReadBackupRegister(BKP_DR3)<<16)));
-  cJSON_AddNumberToObject(root, "time_out", Flash_Read_Number(FLASH_SAVE_ADDR));
-  cJSON_AddBoolToObject(root, "childLock", key_flag.ChildLock_flag);
-  cJSON_AddItemToObject(root, "connect", cJSON_CreateIntArray(gprs_connect_time, gprs_connect_cnt));
-  cJSON_AddItemToObject(root, "break", cJSON_CreateIntArray(gprs_break_time, gprs_break_cnt));
-  cJSON_AddNumberToObject(root, "C1", Conce_PM2_5);
-  cJSON_AddNumberToObject(root, "AQI_MAX", AQI_Max);
-}
-
 void group_json(unsigned char mode)
 {
   cJSON *root = NULL;
@@ -210,9 +189,6 @@ void group_json(unsigned char mode)
       break;
     case PRESS_MODE:
       PressMode_group(root);
-      break;
-    case GPRS_RECORD_MODE:
-      GprsRecordMode_group(root);
       break;
     default:
       printf("group_json 's mode is error!\r\n");
