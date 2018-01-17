@@ -1,7 +1,7 @@
 #ifndef __SERIALPORT_H__
 #define __SERIALPORT_H__
 
-#define _SS_MAX_RX_BUFF 1024
+#define _SS_MAX_RX_BUFF 2048
 
 #define INT_TYPE 0
 #define STRING_TYPE 1
@@ -15,6 +15,7 @@ int SerialAvailable(void);
 int SerialInt(unsigned char rec_data);
 void ClearRxBuf(void);
 char * SerialStringRead(int * head, int * tail);
+int StringFifoRead(unsigned char* s, int maxlen);
 
 #endif
 

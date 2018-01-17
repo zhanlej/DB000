@@ -105,3 +105,14 @@ char * SerialStringRead(int * head, int * tail)
 	*tail = _receive_buffer_tail;
 	return _receive_buffer;
 }
+
+int StringFifoRead(unsigned char* s, int maxlen)
+{
+  int i;
+  for (i = 0; i < maxlen; ++i)
+  {
+    if (SerialAvailable()) s[i] = SerialRead();
+    else return i;
+  }
+  return maxlen;
+}

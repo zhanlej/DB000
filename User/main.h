@@ -42,8 +42,6 @@ int Initial_MQTT(void);
 int MQTT_Sub0Pub1(void);
 int Public_Open(int time);	//发布开机指令
 void Transmission_State(void);
-//int fifo1readdata(unsigned char* s, int maxlen);
-//int fifo3readdata(unsigned char* s, int maxlen);
 void SendJson(u8 mode);
 void SendPress(void);
 int SendPingPack(int times);

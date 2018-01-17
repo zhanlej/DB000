@@ -158,8 +158,8 @@ int main()
 					break;
 			}
 		}
-		else
-			delay_ms(1000);	//因为连接成功状态下会有1S延时
+		
+		delay_ms(1000);
   }
 }
 
@@ -439,8 +439,10 @@ int Initial_MQTT()
   len = MQTTSerialize_connect(mqtt_buf, mqtt_buflen, &mqtt_data);  //这句话开始MQTT的连接，但是不直接和发送函数相连，而是存到一个buf里面，再从buf里面发送
   trans_module_send(mqtt_buf, len);
 
-  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+  //mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+	memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+	delay(1000);
+  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
 	printf("rc = %d\r\n", rc);
   if ( rc == CONNACK)   //这里把获取数据的指针传了进去！！！
   {
@@ -483,8 +485,10 @@ int MQTT_Sub0Pub1()
   //所有这些都不是直接发送，而是通过先获取buffer，我们再手动发送出去
   trans_module_send(mqtt_buf, len);
 
-  mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+  //mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+  memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+	delay(1000);
+  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
   if (rc == SUBACK)  /* wait for suback */ //会在这里阻塞？
   {
     unsigned short submsgid;
@@ -512,8 +516,10 @@ int MQTT_Sub0Pub1()
   }
 	
 	//接收retain数据：expiresAt和childLock
-	mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+	//mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+  memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+	delay(1000);
+  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
 	if (rc == PUBLISH)
   {
     unsigned char dup;
@@ -585,8 +591,10 @@ int Public_Open(int time)
     len = MQTTSerialize_publish(mqtt_buf, mqtt_buflen, dup, qos, retain, packedid, topicString, (unsigned char*)payload, payloadlen);
     trans_module_send(mqtt_buf, len);
 
-    mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-    rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+    //mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+    memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+		delay(1000);
+		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
     printf("PUBLIC OPEN rc = %d\r\n", rc);
     if(rc == PUBACK) return 1;
 		else dup = 1;	//如果 DUP 标志被设置为 1，表示这可能是一个早前报文请求的重发。
@@ -627,8 +635,9 @@ void Transmission_State()
 
   /* transport_getdata() has a built-in 1 second timeout,
   your mileage will vary */
-  trans_module_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+  //trans_module_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+  memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+  rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
   if (rc == PUBLISH)
   {
     unsigned char dup;
@@ -759,8 +768,10 @@ int SendPingPack(int times)
 		len = MQTTSerialize_pingreq(mqtt_buf, 100);
 		trans_module_send(mqtt_buf, len);
 
-		mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
-		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, fifo3readdata);
+		//mqtt_recv(mqtt_buf, sizeof(mqtt_buf), 1000);
+		memset(mqtt_buf, 0, mqtt_buflen);	//为了清空原来的数据
+		delay(1000);
+		rc = MQTTPacket_read(mqtt_buf, mqtt_buflen, StringFifoRead);
 		if ( rc == PINGRESP)   //这里把获取数据的指针传了进去！！！
 		{
 			printf("rc = %d, pingreq is successful!\r\n", rc);

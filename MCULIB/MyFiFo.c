@@ -13,7 +13,7 @@ struct Fifo send_fifo4;
 struct Fifo send_fifo5;
 
 char inner_recvbuffer1[1];
-char inner_recvbuffer3[recvbufLen];
+char inner_recvbuffer3[1];
 
 void Fifo_Init(struct Fifo* f, int length_, char* head_) {
 	(f->read) = (f->write) = (f->head) = head_;
