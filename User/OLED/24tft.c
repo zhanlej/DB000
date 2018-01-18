@@ -642,7 +642,7 @@ void OLED_display_handle(void)
 			LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"质享科技");
 			break;
 		case UI_WIFI_STATUS:
-			if(OLED_display.ui_main.wifi_status == OLED_WIFI_OK || OLED_display.ui_main.wifi_status == OLED_WIFI_FAIL)
+			if(OLED_display.ui_main.wifi_status == OLED_WIFI_OK || OLED_display.ui_main.wifi_status == OLED_WIFI_FAIL || OLED_display.ui_main.wifi_status == OLED_WIFI_BREAK_CONNECT)
 			{
 				if(OLED_display.switch_time)						//切换界面的时间还没到
 				{			
@@ -653,6 +653,9 @@ void OLED_display_handle(void)
 							break;
 						case OLED_WIFI_FAIL:
 							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"连接失败");
+							break;
+						case OLED_WIFI_BREAK_CONNECT:
+							LCD_PutString(HINT_STRING_X,HINT_STRING_Y,"断开连接");
 							break;
 						default:
 							break;
@@ -715,7 +718,7 @@ void OLED_display_handle(void)
 			}
 			else
 			{
-				if(OLED_display.ui_main.wifi_status != OLED_WIFI_FAIL && OLED_display.ui_main.wifi_status != OLED_WIFI_OK)	//如果在连网状态，模式界面显示完后会切换回连网界面
+				if(OLED_display.ui_main.wifi_status != OLED_WIFI_FAIL && OLED_display.ui_main.wifi_status != OLED_WIFI_OK && OLED_display.ui_main.wifi_status != OLED_WIFI_BREAK_CONNECT)	//如果在连网状态，模式界面显示完后会切换回连网界面
 					OLED_ui_switch_set(UI_WIFI_STATUS);
 				else
 					OLED_uitype_change(UI_MAIN);		//OLED切换到主界面

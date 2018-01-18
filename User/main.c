@@ -148,7 +148,9 @@ int main()
 				case initialWAITOK:
 					if(!Initial_trans_module()) break;
 					wifi_status_set(OLED_WIFI_CONNECT_SERVER);	//设置为连接服务器模式
+				case initialTCP:
 					if(!Initial_MQTT()) break;
+				case initialMQTT:
 					if(!MQTT_Sub0Pub1()) break;
 					wifi_status_set(OLED_WIFI_OK);
 					break;
@@ -160,7 +162,7 @@ int main()
 			}
 		}
 		
-		delay_ms(1000);
+		if(All_State != initialTCP) delay_ms(1000);
   }
 }
 
@@ -398,10 +400,17 @@ void wifi_status_set(unsigned char status)
 		beep_on(BEEP_CONNECT);
 		All_State = sendPM;
 	}
-	else
+	else if(status == OLED_WIFI_FAIL)
 	{
-		pingresp_flag = 0;
 		All_State = DISCNNECT;
+	}
+	else if(status == OLED_WIFI_CONNECT_SERVER)
+	{
+		All_State = initialTCP;
+	}
+	else if(status == OLED_WIFI_BREAK_CONNECT)
+	{
+		All_State = initialTCP;
 	}
 	
 	OLED_wifi_status_set(status);
@@ -443,6 +452,8 @@ int Initial_MQTT()
   mqtt_data.will.message.cstring = "0";
   mqtt_data.will.qos = 1;
   mqtt_data.will.retained = 1;
+	
+	ClearRxBuf(); //清除串口中所有缓存的数据
 
   len = MQTTSerialize_connect(mqtt_buf, mqtt_buflen, &mqtt_data);  //这句话开始MQTT的连接，但是不直接和发送函数相连，而是存到一个buf里面，再从buf里面发送
   trans_module_send(mqtt_buf, len);
@@ -459,7 +470,7 @@ int Initial_MQTT()
     if (MQTTDeserialize_connack(&sessionPresent, &connack_rc, mqtt_buf, mqtt_buflen) != 1 || connack_rc != 0)
     {
       printf("MQTT CONNACK1 FAILED!\r\n");
-      wifi_status_set(OLED_WIFI_FAIL);
+      //wifi_status_set(OLED_WIFI_FAIL);
 			return 0;
     }
     else
@@ -472,7 +483,7 @@ int Initial_MQTT()
   {
     //failed ???
     printf("MQTT CONNACK2 FAILED!\r\n");
-    wifi_status_set(OLED_WIFI_FAIL);
+    //wifi_status_set(OLED_WIFI_FAIL);
 		return 0;
   }
 	
@@ -616,8 +627,9 @@ void Transmission_State()
 		ping_flag = 0;
 		if(pingresp_flag)
 		{
+			pingresp_flag = 0;
 			printf("pingpack is FAILED!\r\n");
-			wifi_status_set(OLED_WIFI_FAIL);
+			wifi_status_set(OLED_WIFI_BREAK_CONNECT);
 			return;
 		}
 		else
